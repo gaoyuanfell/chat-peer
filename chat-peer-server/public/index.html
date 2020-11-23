@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      let wss = new WebSocket(`ws://${location.host}`);
+      wss.binaryType = "arraybuffer";
+      wss.onopen = (e) => {
+        console.log("已连接至服务器");
+
+        let a = new ArrayBuffer(4);
+        let uint = new Uint8Array(a);
+        uint[0] = 1;
+        uint[1] = 10;
+        uint[2] = 1;
+        uint[3] = 49;
+
+        console.info(a);
+
+        wss.send(a);
+      };
+      wss.onclose = (e) => {
+        console.log("链接已关闭");
+      };
+      wss.onmessage = (e) => {
+        console.info(e);
+      };
+      wss.onerror = (e) => {
+        console.log("出现错误");
+      };
+    </script>
+  </body>
+</html>

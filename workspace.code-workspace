@@ -1,0 +1,13 @@
+{
+  "folders": [
+	{
+		"path": "chat-peer-ionic-ng"
+	},
+	{
+		"path": "chat-peer-models"
+	},
+	{
+		"path": "chat-peer-server"
+	}
+]
+}

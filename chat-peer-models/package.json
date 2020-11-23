@@ -1,0 +1,17 @@
+{
+  "name": "chat-peer-models",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "dev": "tsc --build -w",
+    "build": "tsc --build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "protobufjs": "^6.10.2",
+    "typescript": "^4.1.2"
+  }
+}

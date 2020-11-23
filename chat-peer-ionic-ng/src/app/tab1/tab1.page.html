@@ -1,0 +1,33 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title> Tab 1 </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Tab 1</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div>
+    <ion-item>
+      <ion-label>地址</ion-label>
+      <ion-input [(ngModel)]="address"></ion-input>
+    </ion-item>
+
+    <ion-button (click)="login()">登录</ion-button>
+
+    <div>
+      <ion-item>
+        <ion-label>消息</ion-label>
+        <ion-input [(ngModel)]="message"></ion-input> </ion-item
+      ><ion-item>
+        <ion-label>对方地址</ion-label>
+        <ion-input [(ngModel)]="otherAddress"></ion-input>
+      </ion-item>
+      <ion-button (click)="send()">发送</ion-button>
+    </div>
+  </div>
+</ion-content>
