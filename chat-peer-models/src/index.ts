@@ -6,8 +6,9 @@ export {
   PeerCandidate,
 } from "./models";
 
-export { MsgTypes } from "./enum";
-export { IDataBlock } from "./interface";
+export { MsgTypes, DataBlockType } from "./enum";
+export { IDataBlock, PeerServer } from "./interface";
+export { AbstractPeerServer } from "./abstract";
 
 export {
   encodeMessage,

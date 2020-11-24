@@ -15,9 +15,8 @@ export class PeerService {
 
   async connect(address: string) {
     let peer = this.get(address);
-
     await this.socket.connent();
-
+    console.info(address);
     peer.registerServer(this.socket);
 
     let [onMessage, onTrack] = peer.eventRef();

@@ -36,7 +36,7 @@ export const packForwardBlocks = (blocks: IDataBlock[]) => {
 
 export const unpackForwardBlocks = (
   data: ArrayBuffer,
-  blockFn: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any
+  blockFn?: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any
 ) => {
   const version = new Uint32Array(data, 0, 1);
   let blocks = [];

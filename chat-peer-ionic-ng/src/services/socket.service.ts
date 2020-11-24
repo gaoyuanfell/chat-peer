@@ -9,11 +9,12 @@ import {
   pickTypedArrayBuffer,
   unpackForwardBlocks,
 } from "chat-peer-models";
+import { DataBlockType } from "chat-peer-models/build/enum";
 import { UserService } from "./user.service";
 
 export interface PeerServer {
   message(data: unknown);
-  onMessage: Function;
+  onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any;
   connent(...args: unknown[]);
   send(receiver: string, blocks: IDataBlock[]);
 }
@@ -22,10 +23,12 @@ export interface PeerServer {
  *
  */
 abstract class AbstractPeerServer implements PeerServer {
-  message(data: unknown) {
+  message(data: { type: DataBlockType; buffer: ArrayBuffer }) {
+    console.info("ok");
+    console.info(this.onMessage);
     this.onMessage(data);
   }
-  abstract onMessage: Function;
+  abstract onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any;
   abstract connent(...args: unknown[]);
   abstract send(receiver: string, blocks: IDataBlock[]);
 }
@@ -62,22 +65,13 @@ export class SocketService extends AbstractPeerServer {
       };
       wss.onmessage = (e) => {
         const data = e.data as ArrayBuffer;
-
         let typeArr = new Uint8Array(data, 0, 1);
         console.info(MsgTypes[typeArr[0]]);
-
         let dataArr = new Uint8Array(data, 1);
-
         let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
-
-        console.info(msg);
-        console.info();
-
-        unpackForwardBlocks(pickTypedArrayBuffer(msg.data), (block) => {
-          console.info(block);
+        unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+          this.message({ type, buffer });
         });
-
-        // this.message(data);
       };
       wss.onerror = (e) => {
         reject(e);
@@ -95,7 +89,7 @@ export class SocketService extends AbstractPeerServer {
     this.wssSend(sendData);
   }
 
-  onMessage: Function;
+  onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any;
   wssSend(data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView) {
     if (this.wss && this.wss.readyState !== 1) throw new Error("socket server did not start");
     this.wss.send(data);

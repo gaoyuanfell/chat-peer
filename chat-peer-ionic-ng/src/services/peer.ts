@@ -33,6 +33,22 @@ export class Peer {
   server: PeerServer;
 
   registerServer(server: PeerServer) {
+    server.onMessage = ({ type, buffer }) => {
+      console.info(type, buffer);
+
+      switch (type) {
+        case DataBlockType.ANSWER:
+          this.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
+          break;
+        case DataBlockType.OFFER:
+          this.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
+          break;
+        case DataBlockType.CANDIDATE:
+          this.candidateHandler(PeerCandidate.decode(new Uint8Array(buffer)).toJSON());
+        default:
+          break;
+      }
+    };
     this.server = server;
   }
 
