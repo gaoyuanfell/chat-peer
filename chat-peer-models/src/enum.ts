@@ -3,3 +3,9 @@ export enum MsgTypes {
   LOGOUT = 2,
   TRANSFER = 3,
 }
+
+export enum DataBlockType {
+  OFFER,
+  ANSWER,
+  CANDIDATE,
+}

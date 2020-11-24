@@ -1,4 +1,5 @@
 export enum DataBlockType {
-  ANSWER,
   OFFER,
+  ANSWER,
+  CANDIDATE,
 }

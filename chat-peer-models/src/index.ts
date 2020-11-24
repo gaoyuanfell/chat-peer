@@ -7,4 +7,12 @@ export {
 } from "./models";
 
 export { MsgTypes } from "./enum";
-export { encodeMessage, decodeMessage, pickTypedArrayBuffer } from "./func";
+export { IDataBlock } from "./interface";
+
+export {
+  encodeMessage,
+  decodeMessage,
+  pickTypedArrayBuffer,
+  packForwardBlocks,
+  unpackForwardBlocks,
+} from "./func";

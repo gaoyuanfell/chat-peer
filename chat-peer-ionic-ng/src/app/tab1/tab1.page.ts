@@ -1,7 +1,16 @@
 import { Component } from "@angular/core";
-import { decodeMessage, encodeMessage, MsgTypes, pickTypedArrayBuffer } from "chat-peer-models";
-import { P2pService } from "src/services/p2p.service";
+import {
+  decodeMessage,
+  encodeMessage,
+  MsgTypes,
+  pickTypedArrayBuffer,
+  TransferMessage,
+  unpackForwardBlocks,
+} from "chat-peer-models";
+import { PeerService } from "src/services/peer.service";
+import { SocketService } from "src/services/socket.service";
 import { TransportService } from "src/services/transport.service";
+import { UserService } from "src/services/user.service";
 
 @Component({
   selector: "app-tab1",
@@ -13,7 +22,12 @@ export class Tab1Page {
   otherAddress: string;
   message: string;
 
-  constructor(private transport: TransportService, private p2p: P2pService) {}
+  constructor(
+    private transport: TransportService,
+    private peer: PeerService,
+    private socket: SocketService,
+    private user: UserService
+  ) {}
 
   wss: WebSocket;
 
@@ -21,8 +35,22 @@ export class Tab1Page {
     let uint = encodeMessage(MsgTypes.LOGIN, {
       address: this.address,
     });
+    await this.socket.connent();
 
-    this.p2p.send(uint);
+    this.socket.onMessage = (data: ArrayBuffer) => {
+      let typeArr = new Uint8Array(data, 0, 1);
+      console.info(MsgTypes[typeArr[0]]);
+
+      let dataArr = new Uint8Array(data.slice(1), 1);
+
+      console.info(TransferMessage.decode(dataArr));
+
+      let blocks = unpackForwardBlocks(TransferMessage.decode(dataArr).data.buffer);
+      console.info(blocks);
+    };
+
+    this.socket.wssSend(uint);
+    this.user.setCurrentAddress(this.address);
   }
 
   send() {
@@ -38,5 +66,9 @@ export class Tab1Page {
     }
 
     this.transport.send(this.otherAddress, blocks);
+  }
+
+  connet() {
+    this.peer.connect(this.otherAddress);
   }
 }
