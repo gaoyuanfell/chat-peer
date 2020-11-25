@@ -1,4 +1,12 @@
-import { DataBlockType, encodeMessage, MsgTypes, PeerCandidate, PeerDescription, PeerServer } from "chat-peer-models";
+import {
+  DataBlockType,
+  decodeMessage,
+  encodeMessage,
+  MsgTypes,
+  PeerCandidate,
+  PeerDescription,
+  PeerServer,
+} from "chat-peer-models";
 import { Peer } from "./peer";
 import { Pool } from "./pool";
 import { SocketService } from "./socket";
@@ -26,9 +34,18 @@ export class PeerHelper {
     return this.#pool.get(address);
   }
 
+  get address() {
+    return this.#pool!.address;
+  }
+
   getPeerList() {
     return this.#pool.getAll();
   }
+
+  /**
+   * 获取所有连接的地址表
+   */
+  getAddressList() {}
 
   /**
    * 等待连接
@@ -67,18 +84,17 @@ export class PeerHelper {
   /**
    * 主动发起连接
    */
-  launch(address: string) {
-    if (this.#pool.address === address) return;
-    let peer: Peer = this.#pool.get(address);
-    if (peer.connectionState === "connected") return;
-
+  launch(receiver: string) {
+    if (this.address === receiver) return;
+    let peer: Peer = this.#pool.get(receiver);
+    if (peer.connected) return;
     this.peerBindSendServer(peer);
-    peer.launchPeer(address);
+    peer.launchPeer(receiver);
   }
 
   private peerBindSendServer(peer: Peer) {
-    if (!peer.hasBindSendServer) {
-      peer.hasBindSendServer = true;
+    if (!peer.hasBindEvent) {
+      peer.hasBindEvent = true;
       peer.on("sendAnswer", ({ to, from, block }) => {
         this.#socket.send(to, from, [block]);
       });
@@ -92,51 +108,43 @@ export class PeerHelper {
         console.info("closed");
         this.#pool.remove(peer.to);
       });
+
+      // TODO 继续完成 地址表 桥接 逻辑
+      peer.on("message", (e) => {
+        const data = e.data;
+        let typeArr = new Uint8Array(data, 0, 1);
+        console.info(MsgTypes[typeArr[0]]);
+        switch (typeArr[0]) {
+          case MsgTypes.ADDRESS_TABLE:
+            this.onAddressTable(data);
+            break;
+          case MsgTypes.BRIDGE:
+            this.onBridge(data);
+            break;
+        }
+      });
     }
+  }
+
+  onAddressTable(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
+    console.info(msg);
+  }
+
+  onBridge(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.BRIDGE, dataArr);
+    console.info(msg);
   }
 
   create(address: string) {
     this.waitingConnection(address);
-
-    // const a = function () {}.bind(this);
-    // let socket = new SocketService();
-    // socket.connent().then(() => {
-    //   let uint = encodeMessage(MsgTypes.LOGIN, {
-    //     address: address,
-    //   });
-    //   socket.wssSend(uint);
-    // });
-    // PeerHelper.currentPeer.registerServer(socket);
-
-    // PeerHelper.currentPeer.on("connected", () => {
-    //   instace.pool.set(peer.to, peer);
-    //   socket.wss.close();
-    // });
-    // PeerHelper.currentPeer.on("disconnected", () => {
-    //   instace.pool.delete(peer.to);
-    // });
-
-    // PeerHelper.currentPeer.on("closed", () => {
-    //   console.info("closed");
-    // });
   }
 
-  //   static getPeer(otherAddress: string) {
-  //     let instace = PeerHelper.instance;
-  //     let peer = instace.pool.get(otherAddress);
-  //     if (!peer) {
-  //       return PeerHelper.currentPeer;
-  //     }
-  //     return peer;
-  //   }
-
-  //   static getPeerList() {
-  //     let instace = PeerHelper.instance;
-  //     return [...instace.pool.entries()].map(([key, peer]) => {
-  //       return {
-  //         key,
-  //         peer,
-  //       };
-  //     });
-  //   }
+  send(receiver: string, data: ArrayBuffer) {
+    let peer: Peer = this.#pool.get(receiver);
+    if (!peer!.connected) return;
+    peer.channelSend(data);
+  }
 }

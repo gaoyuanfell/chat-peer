@@ -1,4 +1,3 @@
-import { PeerServer } from "chat-peer-models";
 import { Peer } from "./peer";
 
 export class Pool {
@@ -37,7 +36,7 @@ export class Pool {
     if (this.pool.has(address)) {
       let _pool = this.pool.get(address);
       this.pool.delete(address);
-      if (_pool && _pool.connectionState === "connected") {
+      if (_pool && _pool.connected) {
         console.info("pool close");
         _pool.close();
       }

@@ -19,6 +19,8 @@ export class Tab1Page {
 
   peer: Peer;
 
+  peerList = [];
+
   async login() {
     PeerHelper.instance.create(this.address);
 
@@ -27,8 +29,12 @@ export class Tab1Page {
     // this.user.setCurrentAddress(this.address);
 
     setInterval(() => {
-      console.info(PeerHelper.instance.getPeerList());
+      this.peerList = PeerHelper.instance.getPeerList();
     }, 2000);
+  }
+
+  showPeer(peer) {
+    console.info(peer);
   }
 
   send() {

@@ -1,6 +1,12 @@
 import { IDataBlock } from "./interface";
 import { DataBlockType, MsgTypes } from "./enum";
-import { LoginMessage, LogoutMessage, TransferMessage } from "./models";
+import {
+  LoginMessage,
+  LogoutMessage,
+  TransferMessage,
+  AddressTableMessage,
+  BridegMessage,
+} from "./models";
 
 const DATAPACK_VERSION = 1;
 
@@ -66,12 +72,16 @@ type MessageTypeDict = {
   [MsgTypes.LOGIN]: LoginMessage;
   [MsgTypes.LOGOUT]: LogoutMessage;
   [MsgTypes.TRANSFER]: TransferMessage;
+  [MsgTypes.ADDRESS_TABLE]: AddressTableMessage;
+  [MsgTypes.BRIDGE]: BridegMessage;
 };
 
 const messageTypeDict = {
   [MsgTypes.LOGIN]: LoginMessage,
   [MsgTypes.LOGOUT]: LogoutMessage,
   [MsgTypes.TRANSFER]: TransferMessage,
+  [MsgTypes.ADDRESS_TABLE]: AddressTableMessage,
+  [MsgTypes.BRIDGE]: BridegMessage,
 };
 
 /**

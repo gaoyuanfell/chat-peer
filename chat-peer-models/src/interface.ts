@@ -5,6 +5,12 @@ export interface IDataBlock {
   payload: ArrayBuffer;
 }
 
+export interface IDataBlockTransport {
+  to: string;
+  from: string;
+  block: IDataBlock;
+}
+
 export interface PeerServer {
   message(data: unknown): any;
   onMessage: (block: {

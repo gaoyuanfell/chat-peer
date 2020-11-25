@@ -1,31 +1,31 @@
-import { PeerDescription, IDataBlock, PeerCandidate, DataBlockType } from "chat-peer-models";
-import { EmitType, Subscribe } from "./subscribe";
+import { PeerDescription, PeerCandidate, DataBlockType } from "chat-peer-models";
+import { Subscribe } from "./subscribe";
 
-export class Peer {
+export class Peer extends Subscribe {
   rtcPeer: RTCPeerConnection;
   channel: RTCDataChannel;
   from: string;
   to: string;
-  private subscribe: Subscribe;
-  hasBindSendServer: boolean; // 是否监听过发送信令
+  hasBindEvent: boolean; // 是否监听过发送信令
 
-  get connectionState() {
-    return this.rtcPeer.connectionState;
+  get connected() {
+    return this.rtcPeer.connectionState === "connected";
   }
 
   constructor(address: string) {
+    super();
     this.from = address;
     this.rtcPeer = new RTCPeerConnection({
       iceServers: [
-        {
-          urls: [
-            // "stun:stun1.l.google.com:19302",
-            // "stun:stun2.l.google.com:19302",
-            // "stun:stun3.l.google.com:19302",
-            // "stun:stun4.l.google.com:19302",
-            // "stun:s331835e69.zicp.vip:8865",
-          ],
-        },
+        // {
+        //   urls: [
+        //     "stun:stun1.l.google.com:19302",
+        //     "stun:stun2.l.google.com:19302",
+        //     "stun:stun3.l.google.com:19302",
+        //     "stun:stun4.l.google.com:19302",
+        //     "stun:s331835e69.zicp.vip:8865",
+        //   ],
+        // },
         {
           urls: "turn:s331835e69.zicp.vip:8865",
           username: "test",
@@ -35,19 +35,6 @@ export class Peer {
     });
 
     this.peerEvent();
-    this.subscribe = new Subscribe();
-  }
-
-  private emit(type: EmitType, data?: unknown) {
-    this.subscribe.emit(type, data);
-  }
-
-  on(type: EmitType, fn) {
-    this.subscribe.on(type, fn);
-  }
-
-  once(type: EmitType, fn) {
-    this.subscribe.once(type, fn);
   }
 
   private peerEvent() {
@@ -59,6 +46,7 @@ export class Peer {
        * "complete"	ICE代理已完成候选人征集。如果发生需要收集新候选对象的情况，例如正在添加新接口或添加新ICE服务器，则状态将恢复为“聚集”以收集那些候选对象。
        */
       console.info("onicegatheringstatechange", this.rtcPeer.iceGatheringState);
+      this.emit("icegatheringstatechange", this.rtcPeer.iceGatheringState);
     };
 
     // 当对等连接的signalingState更改
@@ -72,6 +60,8 @@ export class Peer {
        * "closed"  连接已关闭。 注意：此值已移入规范的2016年5月13日的RTCPeerConnectionState枚举中，因为它反映的状态，而RTCPeerConnection不是信令连接。现在，检测通过检查关闭的连接为connectionState要"closed"代替。
        */
       console.info("onsignalingstatechange", this.rtcPeer.signalingState);
+
+      this.emit("signalingstatechange", this.rtcPeer.signalingState);
     };
 
     // 当连接的ICE代理的状态（以该iceConnectionState属性表示）改变时
@@ -86,6 +76,7 @@ export class Peer {
        * "closed"	ICE代理RTCPeerConnection已关闭，不再处理请求。
        */
       console.info("iceConnectionState", this.rtcPeer.iceConnectionState);
+      this.emit("iceconnectionstatechange", this.rtcPeer.iceConnectionState);
     };
 
     this.rtcPeer.onconnectionstatechange = () => {
@@ -98,22 +89,15 @@ export class Peer {
        * "closed"	 将RTCPeerConnection被关闭。 该值一直存在于RTCSignalingState枚举中（因此通过读取的值可以找到signalingState），直到规范的2016年5月13日草案为止。
        */
       console.info("onconnectionstatechange", this.rtcPeer.connectionState);
+      this.emit("connectionstatechange", this.rtcPeer.connectionState);
       switch (this.rtcPeer.connectionState) {
         case "new":
+        case "connecting":
+        case "connected":
           break;
         case "closed":
-          this.emit("closed");
-          this.destroy();
-          break;
-        case "connecting":
-          break;
-        case "connected":
-          this.emit("connected");
-          break;
         case "disconnected":
         case "failed":
-          this.emit("disconnected");
-          this.emit("failed");
           this.emit("closed");
           this.destroy();
           break;
@@ -122,12 +106,14 @@ export class Peer {
 
     this.rtcPeer.onicecandidateerror = (e: RTCPeerConnectionIceErrorEvent) => {
       console.error("RTCPeerConnectionIceErrorEvent", e);
+      this.emit("icecandidateerror", e);
     };
 
     /**
      * 描述 事件
      */
     this.rtcPeer.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
+      this.emit("icecandidate", event);
       if (event.candidate) {
         this.sendCandidate(event.candidate);
       }
@@ -135,24 +121,25 @@ export class Peer {
 
     this.rtcPeer.ontrack = (e: RTCTrackEvent) => {
       console.info("ontrack", e);
-      this.subscribe.emit("track", e);
+      this.emit("track", e);
     };
 
     /**
      * 被动接收消息
      */
-    this.rtcPeer.ondatachannel = (event) => {
+    this.rtcPeer.ondatachannel = (event: RTCDataChannelEvent) => {
+      this.emit("datachannel", event);
       let channel = event.channel;
       channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         console.info(event.data);
-        this.subscribe.emit("message", event);
+        this.emit("message", event);
       };
     };
 
     this.channel = this.rtcPeer.createDataChannel(this.from);
     this.channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       console.info(event.data);
-      this.subscribe.emit("message", event);
+      this.emit("message", event);
     };
   }
 
@@ -292,6 +279,6 @@ export class Peer {
   }
 
   private destroy() {
-    this.subscribe.destroy();
+    this.clear();
   }
 }

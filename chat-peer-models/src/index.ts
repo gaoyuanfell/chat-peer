@@ -4,10 +4,12 @@ export {
   TransferMessage,
   PeerDescription,
   PeerCandidate,
+  AddressTableMessage,
+  BridegMessage,
 } from "./models";
 
 export { MsgTypes, DataBlockType } from "./enum";
-export { IDataBlock, PeerServer } from "./interface";
+export { IDataBlock, PeerServer, IDataBlockTransport } from "./interface";
 export { AbstractPeerServer } from "./abstract";
 
 export {

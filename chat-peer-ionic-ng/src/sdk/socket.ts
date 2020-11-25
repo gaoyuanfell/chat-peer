@@ -37,15 +37,23 @@ export class SocketService extends AbstractPeerServer {
         const data = e.data as ArrayBuffer;
         let typeArr = new Uint8Array(data, 0, 1);
         console.info(MsgTypes[typeArr[0]]);
-        let dataArr = new Uint8Array(data, 1);
-        let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
-        unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
-          this.message({ type, buffer, from: msg.from });
-        });
+        switch (typeArr[0]) {
+          case MsgTypes.TRANSFER:
+            this.onTransfer(data);
+            break;
+        }
       };
       wss.onerror = (e) => {
         reject(e);
       };
+    });
+  }
+
+  onTransfer(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
+    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+      this.message({ type, buffer, from: msg.from });
     });
   }
 
