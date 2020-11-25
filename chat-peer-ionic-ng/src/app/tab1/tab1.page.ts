@@ -26,17 +26,21 @@ export class Tab1Page {
 
     // this.user.setCurrentAddress(this.address);
 
-    // setInterval(() => {
-    //   // console.info(PeerHelper.getPeerList());
-    // }, 2000);
+    setInterval(() => {
+      console.info(PeerHelper.instance.getPeerList());
+    }, 2000);
   }
 
   send() {
-    // PeerHelper.getPeer(this.otherAddress).channelSend(this.message);
+    PeerHelper.instance.getPeer(this.otherAddress).channelSend(this.message);
   }
 
   connet() {
     PeerHelper.instance.launch(this.otherAddress);
     // PeerHelper.getPeer(this.otherAddress).launchPeer(this.otherAddress);
+  }
+
+  close() {
+    PeerHelper.instance.getPeer(this.otherAddress).close();
   }
 }

@@ -9,6 +9,10 @@ export class Pool {
 
   private pool = new Map<string, Peer>();
 
+  has(address: string) {
+    return this.pool.has(address);
+  }
+
   /**
    *
    * @param address 对方地址
@@ -22,20 +26,28 @@ export class Pool {
     return _pool;
   }
 
+  getAll() {
+    return [...this.pool.entries()];
+  }
+
   /**
-   *
    * @param address 对方地址
    */
   remove(address: string) {
-    let _pool = this.pool.get(address);
-    if (_pool) {
-      _pool.destroy();
+    if (this.pool.has(address)) {
+      let _pool = this.pool.get(address);
+      this.pool.delete(address);
+      if (_pool && _pool.connectionState === "connected") {
+        console.info("pool close");
+        _pool.close();
+      }
     }
   }
 
   reset() {
     for (const pool of this.pool.values()) {
-      pool.destroy();
+      pool.close();
     }
+    this.pool.clear();
   }
 }

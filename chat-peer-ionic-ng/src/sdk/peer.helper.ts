@@ -22,7 +22,12 @@ export class PeerHelper {
   }
 
   getPeer(address: string) {
+    if (!address) throw new Error("address connot be empty");
     return this.#pool.get(address);
+  }
+
+  getPeerList() {
+    return this.#pool.getAll();
   }
 
   /**
@@ -63,6 +68,7 @@ export class PeerHelper {
    * 主动发起连接
    */
   launch(address: string) {
+    if (this.#pool.address === address) return;
     let peer: Peer = this.#pool.get(address);
     if (peer.connectionState === "connected") return;
 
@@ -70,8 +76,9 @@ export class PeerHelper {
     peer.launchPeer(address);
   }
 
-  peerBindSendServer(peer: Peer) {
-    if (peer.connectionState !== "connected") {
+  private peerBindSendServer(peer: Peer) {
+    if (!peer.hasBindSendServer) {
+      peer.hasBindSendServer = true;
       peer.on("sendAnswer", ({ to, from, block }) => {
         this.#socket.send(to, from, [block]);
       });
@@ -80,6 +87,10 @@ export class PeerHelper {
       });
       peer.on("sendCandidate", ({ to, from, block }) => {
         this.#socket.send(to, from, [block]);
+      });
+      peer.on("closed", () => {
+        console.info("closed");
+        this.#pool.remove(peer.to);
       });
     }
   }
