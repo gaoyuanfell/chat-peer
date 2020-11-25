@@ -1,6 +1,5 @@
 import { Injectable } from "@angular/core";
-import { encodeMessage, MsgTypes, TransferMessage } from "chat-peer-models";
-import { DataBlockType } from "src/common/enum";
+import { encodeMessage, MsgTypes, TransferMessage, DataBlockType } from "chat-peer-models";
 import { p2p$, send$, transport$ } from "src/common/subscribes";
 
 const DATAPACK_VERSION = 1;

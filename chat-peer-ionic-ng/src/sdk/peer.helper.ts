@@ -1,4 +1,6 @@
 import {
+  AddressTableMessage,
+  AddressTableTypeMessage,
   DataBlockType,
   decodeMessage,
   encodeMessage,
@@ -109,7 +111,6 @@ export class PeerHelper {
         this.#pool.remove(peer.to);
       });
 
-      // TODO 继续完成 地址表 桥接 逻辑
       peer.on("message", (e) => {
         const data = e.data;
         let typeArr = new Uint8Array(data, 0, 1);
@@ -126,25 +127,62 @@ export class PeerHelper {
     }
   }
 
+  create(address: string) {
+    this.waitingConnection(address);
+  }
+
+  /**
+   * 桥接数据转发 采用数据打包后发送 减少转发次数
+   */
+  transport() {}
+
+  send(receiver: string, data: ArrayBuffer) {
+    let peer: Peer = this.#pool.get(receiver);
+    if (!peer!.connected) return;
+    peer.channelSend(data);
+  }
+
   onAddressTable(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
+    msg.type === AddressTableTypeMessage.REQUEST;
+    switch (msg.type) {
+      /**
+       * 发送自己的路由表
+       */
+      case AddressTableTypeMessage.REQUEST:
+        this.addressTableRequest(msg);
+        break;
+      /**
+       * 接收到路由表后 更新自己的连接
+       */
+      case AddressTableTypeMessage.RESPONSE:
+        this.addressTableResponse(msg);
+        break;
+    }
     console.info(msg);
+  }
+
+  private addressTableRequest(msg: AddressTableMessage) {
+    let list = this.getPeerList().map(([key]) => key);
+    let model = new AddressTableMessage({
+      addressList: list,
+      type: AddressTableTypeMessage.RESPONSE,
+    });
+    let uint = encodeMessage(MsgTypes.ADDRESS_TABLE, model);
+    this.send(msg.receiver, uint);
+  }
+
+  // TODO
+  private addressTableResponse(msg: AddressTableMessage) {
+    let list = this.getPeerList().map(([key]) => key);
+
+    console.info(msg.addressList);
   }
 
   onBridge(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.BRIDGE, dataArr);
     console.info(msg);
-  }
-
-  create(address: string) {
-    this.waitingConnection(address);
-  }
-
-  send(receiver: string, data: ArrayBuffer) {
-    let peer: Peer = this.#pool.get(receiver);
-    if (!peer!.connected) return;
-    peer.channelSend(data);
   }
 }

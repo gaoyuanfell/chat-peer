@@ -1,5 +1,4 @@
-import { PeerDescription, IDataBlock, PeerCandidate } from "chat-peer-models";
-import { DataBlockType } from "src/common/enum";
+import { PeerDescription, IDataBlock, PeerCandidate, DataBlockType } from "chat-peer-models";
 import { PeerServer } from "./socket.service";
 
 export class Peer {

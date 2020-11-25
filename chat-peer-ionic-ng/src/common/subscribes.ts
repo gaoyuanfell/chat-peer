@@ -1,5 +1,5 @@
+import { DataBlockType } from "chat-peer-models";
 import { Subject } from "rxjs";
-import type { DataBlockType } from "./enum";
 
 export const p2p$ = new Subject<[string, ArrayBuffer]>();
 

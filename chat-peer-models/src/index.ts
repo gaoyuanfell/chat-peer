@@ -5,6 +5,7 @@ export {
   PeerDescription,
   PeerCandidate,
   AddressTableMessage,
+  AddressTableTypeMessage,
   BridegMessage,
 } from "./models";
 
