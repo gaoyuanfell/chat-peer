@@ -36,7 +36,6 @@ export class SocketService extends AbstractPeerServer {
       wss.onmessage = (e) => {
         const data = e.data as ArrayBuffer;
         let typeArr = new Uint8Array(data, 0, 1);
-        console.info(MsgTypes[typeArr[0]]);
         switch (typeArr[0]) {
           case MsgTypes.TRANSFER:
             this.onTransfer(data);
@@ -58,7 +57,6 @@ export class SocketService extends AbstractPeerServer {
   }
 
   send(receiver: string, from: string, blocks: IDataBlock[]) {
-    console.info(receiver);
     let pack = packForwardBlocks(blocks);
 
     let msg = new TransferMessage({ to: receiver, from: from, data: pack });

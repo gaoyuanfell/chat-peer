@@ -10,4 +10,5 @@ export enum DataBlockType {
   OFFER,
   ANSWER,
   CANDIDATE,
+  WRITTEN_WORDS,
 }

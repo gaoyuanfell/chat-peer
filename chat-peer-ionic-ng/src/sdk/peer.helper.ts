@@ -22,6 +22,7 @@ const peerHelperSymbol = Symbol("PeerHelper");
 export class PeerHelper {
   #pool: Pool;
   #socket: SocketService;
+  [peerHelperSymbol]: PeerHelper;
 
   constructor() {
     if (!PeerHelper[peerHelperSymbol]) {
@@ -29,8 +30,6 @@ export class PeerHelper {
     }
     return PeerHelper[peerHelperSymbol];
   }
-
-  [peerHelperSymbol]: PeerHelper;
 
   static get instance() {
     return new PeerHelper();
@@ -50,16 +49,10 @@ export class PeerHelper {
   }
 
   /**
-   * 获取所有连接的地址表
-   */
-  getAddressList() {}
-
-  /**
    * 等待连接
    */
   waitingConnection(address: string) {
     this.#pool = new Pool(address);
-
     /**
      * 信令服务 socket
      */
@@ -108,13 +101,11 @@ export class PeerHelper {
       peer.on("closed", () => {
         this.#pool.remove(peer.to);
       });
-      peer.on("connected", () => {
+      peer.on("datachannel", () => {
         /**
-         * 开始扫描这个节点下的地址表
+         * 节点扫描
          */
-        // requestAnimationFrame(() => {
-        //   this.scanAddressList();
-        // });
+        this.scanAddressList();
       });
       peer.on("message", (e) => {
         const data = e.data;
@@ -137,7 +128,7 @@ export class PeerHelper {
    * 服务节点模式 使用 socket 传输
    * 本地节点模式 使用 rtc 传输
    */
-  signalSend(to: string, from: string, block: IDataBlock, bridgeAddress: string) {
+  private signalSend(to: string, from: string, block: IDataBlock, bridgeAddress: string) {
     if (bridgeAddress) {
       /**
        * 桥接数据转发 采用数据打包后发送 减少转发次数
@@ -159,7 +150,7 @@ export class PeerHelper {
   /**
    * 处理接收到的信令
    */
-  onSignal(type: DataBlockType, buffer: ArrayBuffer, otherAddress: string, bridgeAddress?: string) {
+  private onSignal(type: DataBlockType, buffer: ArrayBuffer, otherAddress: string, bridgeAddress?: string) {
     let peer: Peer = this.#pool.get(otherAddress);
     this.peerBindSendServer(peer);
     switch (type) {
@@ -176,6 +167,18 @@ export class PeerHelper {
     }
   }
 
+  async call(otherAddress: string) {
+    let peer: Peer = this.#pool.get(otherAddress);
+    if (!peer!.connected) return;
+
+    let stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    peer.addTrack(stream);
+    this.launch(otherAddress, otherAddress);
+  }
+
   create(address: string) {
     this.waitingConnection(address);
   }
@@ -190,7 +193,7 @@ export class PeerHelper {
    * ADDRESS_TABLE类型的处理方法
    * @param data
    */
-  onAddressTable(data: ArrayBuffer) {
+  private onAddressTable(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
     msg.type === AddressTableTypeMessage.REQUEST;
@@ -213,15 +216,15 @@ export class PeerHelper {
   /**
    * BRIDGE类型的处理方法
    */
-  onBridge(data: ArrayBuffer) {
+  private onBridge(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.BRIDGE, dataArr);
+    let path = msg.path;
+    path.push(this.address);
     /**
      * 不是自己的消息 将消息转发出去
      */
     if (msg.receiver !== this.address) {
-      let path = msg.path;
-      path.push(this.address);
       let model = new BridegMessage({
         receiver: msg.receiver,
         to: msg.receiver,
@@ -234,8 +237,9 @@ export class PeerHelper {
       return;
     }
     console.info("path:", msg.path);
-    let otherAddress = msg.path[0];
+    let otherAddress = msg.path[0]; // 数据发送者
     unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+      console.info(`收到 ${msg.path[0]} => ${msg.path[msg.path.length - 1]} 类型 ${DataBlockType[type]}`);
       this.onSignal(type, buffer, otherAddress, msg.from);
     });
   }

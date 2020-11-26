@@ -94,6 +94,7 @@ export class Peer extends Subscribe {
         case "connecting":
           break;
         case "connected":
+          this.bridgeAddress = undefined;
           this.emit("connected");
           break;
         case "closed":
@@ -166,10 +167,10 @@ export class Peer extends Subscribe {
    */
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
-    if (!this.rtcPeer.remoteDescription) {
-      await this.rtcPeer.setRemoteDescription(description);
-      await this.createAnswer();
-    }
+    // if (!this.rtcPeer.remoteDescription) {
+    await this.rtcPeer.setRemoteDescription(description);
+    await this.createAnswer();
+    // }
     this.sendAnswer();
   }
 
@@ -177,9 +178,9 @@ export class Peer extends Subscribe {
    * 接收到 answer 后 下个执行步骤
    */
   async answerHandler(description: RTCSessionDescriptionInit) {
-    if (!this.rtcPeer.remoteDescription) {
-      await this.rtcPeer.setRemoteDescription(description);
-    }
+    // if (!this.rtcPeer.remoteDescription) {
+    await this.rtcPeer.setRemoteDescription(description);
+    // }
   }
 
   /**
@@ -194,7 +195,7 @@ export class Peer extends Subscribe {
    * 创建 offer 呼叫
    */
   private async createOffer() {
-    if (this.rtcPeer.localDescription) return;
+    // if (this.rtcPeer.localDescription) return;
     let offer = await this.rtcPeer.createOffer();
     await this.rtcPeer.setLocalDescription(offer);
   }
@@ -203,7 +204,7 @@ export class Peer extends Subscribe {
    * 创建 answer 应答
    */
   private async createAnswer() {
-    if (this.rtcPeer.localDescription) return;
+    // if (this.rtcPeer.localDescription) return;
     let answer = await this.rtcPeer.createAnswer();
     await this.rtcPeer.setLocalDescription(answer);
   }
@@ -271,6 +272,12 @@ export class Peer extends Subscribe {
       bridgeAddress: this.bridgeAddress,
     });
     console.info(`sendCandidate 发送描述`, candidate);
+  }
+
+  addTrack(stream: MediaStream) {
+    stream.getTracks().forEach((track) => {
+      this.rtcPeer.addTrack(track);
+    });
   }
 
   close() {

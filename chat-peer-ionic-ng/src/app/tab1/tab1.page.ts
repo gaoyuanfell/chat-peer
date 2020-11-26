@@ -1,4 +1,3 @@
-import { UserService } from "src/services/user.service";
 import { Component } from "@angular/core";
 import { Peer } from "src/sdk/peer";
 import { PeerHelper } from "src/sdk/peer.helper";
@@ -13,7 +12,7 @@ export class Tab1Page {
   otherAddress: string;
   message: string;
 
-  constructor(private user: UserService) {}
+  constructor() {}
 
   wss: WebSocket;
 
@@ -23,11 +22,6 @@ export class Tab1Page {
 
   async login() {
     PeerHelper.instance.create(this.address);
-
-    // PeerHelper.createPeer(this.address);
-
-    // this.user.setCurrentAddress(this.address);
-
     setInterval(() => {
       this.peerList = PeerHelper.instance.getPeerList();
     }, 2000);
@@ -38,7 +32,7 @@ export class Tab1Page {
   }
 
   send() {
-    PeerHelper.instance.getPeer(this.otherAddress).channelSend(this.message);
+    // PeerHelper.instance.send(this.otherAddress, this.message);
   }
 
   connet() {
@@ -52,5 +46,9 @@ export class Tab1Page {
 
   scanAddressList() {
     PeerHelper.instance.scanAddressList();
+  }
+
+  call() {
+    PeerHelper.instance.call(this.otherAddress);
   }
 }
