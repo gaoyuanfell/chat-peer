@@ -1140,17 +1140,17 @@
     ws "^7.0.1"
 
 "@ionic/angular@^5.5.0":
-  version "5.5.0"
-  resolved "https://registry.npm.taobao.org/@ionic/angular/download/@ionic/angular-5.5.0.tgz#bf8d44ebe4fbe6bc76c9ac260185b4651ceb037b"
-  integrity sha1-v41E6+T75rx2yawmAYW0ZRzrA3s=
+  version "5.5.1"
+  resolved "https://registry.npm.taobao.org/@ionic/angular/download/@ionic/angular-5.5.1.tgz#d1c1d855b2444e09a029f3e8ee0dd260a8029ed8"
+  integrity sha1-0cHYVbJETgmgKfPo7g3SYKgCntg=
   dependencies:
-    "@ionic/core" "5.5.0"
+    "@ionic/core" "5.5.1"
     tslib "^1.9.3"
 
-"@ionic/core@5.5.0":
-  version "5.5.0"
-  resolved "https://registry.npm.taobao.org/@ionic/core/download/@ionic/core-5.5.0.tgz#2825c6c0a418be2c72037b4a702dfcc6de9c526d"
-  integrity sha1-KCXGwKQYvixyA3tKcC38xt6cUm0=
+"@ionic/core@5.5.1":
+  version "5.5.1"
+  resolved "https://registry.npm.taobao.org/@ionic/core/download/@ionic/core-5.5.1.tgz#82d86ebb96b815aec73bc5b0c45fbefd89a4dc1e"
+  integrity sha1-gthuu5a4Fa7HO8WwxF++/Ymk3B4=
   dependencies:
     ionicons "^5.1.2"
     tslib "^1.10.0"
@@ -2156,7 +2156,7 @@ browserify-zlib@^0.2.0:
   dependencies:
     pako "~1.0.5"
 
-browserslist@^4.0.0, browserslist@^4.12.0, browserslist@^4.14.5, browserslist@^4.14.6, browserslist@^4.9.1:
+browserslist@^4.0.0, browserslist@^4.12.0, browserslist@^4.14.5, browserslist@^4.14.7, browserslist@^4.9.1:
   version "4.14.7"
   resolved "https://registry.npm.taobao.org/browserslist/download/browserslist-4.14.7.tgz?cache=0&sync_timestamp=1604945352852&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fbrowserslist%2Fdownload%2Fbrowserslist-4.14.7.tgz#c071c1b3622c1c2e790799a37bb09473a4351cb6"
   integrity sha1-wHHBs2IsHC55B5mje7CUc6Q1HLY=
@@ -2829,16 +2829,16 @@ copy-webpack-plugin@^6.0.3:
     webpack-sources "^1.4.3"
 
 core-js-compat@^3.6.2:
-  version "3.7.0"
-  resolved "https://registry.npm.taobao.org/core-js-compat/download/core-js-compat-3.7.0.tgz?cache=0&sync_timestamp=1604675638194&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcore-js-compat%2Fdownload%2Fcore-js-compat-3.7.0.tgz#8479c5d3d672d83f1f5ab94cf353e57113e065ed"
-  integrity sha1-hHnF09Zy2D8fWrlM81PlcRPgZe0=
+  version "3.8.0"
+  resolved "https://registry.npm.taobao.org/core-js-compat/download/core-js-compat-3.8.0.tgz?cache=0&sync_timestamp=1606329659297&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcore-js-compat%2Fdownload%2Fcore-js-compat-3.8.0.tgz#3248c6826f4006793bd637db608bca6e4cd688b1"
+  integrity sha1-MkjGgm9ABnk71jfbYIvKbkzWiLE=
   dependencies:
-    browserslist "^4.14.6"
+    browserslist "^4.14.7"
     semver "7.0.0"
 
 core-js@3.6.5:
   version "3.6.5"
-  resolved "https://registry.npm.taobao.org/core-js/download/core-js-3.6.5.tgz?cache=0&sync_timestamp=1604675690423&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcore-js%2Fdownload%2Fcore-js-3.6.5.tgz#7395dc273af37fb2e50e9bd3d9fe841285231d1a"
+  resolved "https://registry.npm.taobao.org/core-js/download/core-js-3.6.5.tgz?cache=0&sync_timestamp=1606329319777&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcore-js%2Fdownload%2Fcore-js-3.6.5.tgz#7395dc273af37fb2e50e9bd3d9fe841285231d1a"
   integrity sha1-c5XcJzrzf7LlDpvT2f6EEoUjHRo=
 
 core-util-is@1.0.2, core-util-is@~1.0.0:
@@ -5216,7 +5216,7 @@ json-parse-even-better-errors@^2.3.0:
 
 json-schema-traverse@^0.4.1:
   version "0.4.1"
-  resolved "https://registry.npm.taobao.org/json-schema-traverse/download/json-schema-traverse-0.4.1.tgz#69f6a87d9513ab8bb8fe63bdb0979c448e684660"
+  resolved "https://registry.npm.taobao.org/json-schema-traverse/download/json-schema-traverse-0.4.1.tgz?cache=0&sync_timestamp=1599336253018&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fjson-schema-traverse%2Fdownload%2Fjson-schema-traverse-0.4.1.tgz#69f6a87d9513ab8bb8fe63bdb0979c448e684660"
   integrity sha1-afaofZUTq4u4/mO9sJecRI5oRmA=
 
 json-schema@0.2.3:
@@ -5511,9 +5511,9 @@ log4js@^6.2.1:
     streamroller "^2.2.4"
 
 loglevel@^1.6.8:
-  version "1.7.0"
-  resolved "https://registry.npm.taobao.org/loglevel/download/loglevel-1.7.0.tgz?cache=0&sync_timestamp=1598447647858&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Floglevel%2Fdownload%2Floglevel-1.7.0.tgz#728166855a740d59d38db01cf46f042caa041bb0"
-  integrity sha1-coFmhVp0DVnTjbAc9G8ELKoEG7A=
+  version "1.7.1"
+  resolved "https://registry.npm.taobao.org/loglevel/download/loglevel-1.7.1.tgz?cache=0&sync_timestamp=1606312221245&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Floglevel%2Fdownload%2Floglevel-1.7.1.tgz#005fde2f5e6e47068f935ff28573e125ef72f197"
+  integrity sha1-AF/eL15uRwaPk1/yhXPhJe9y8Zc=
 
 long@^4.0.0:
   version "4.0.0"

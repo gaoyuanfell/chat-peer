@@ -19,7 +19,7 @@ export class Tab1Page {
 
   peer: Peer;
 
-  peerList = [];
+  peerList: Array<[string, Peer]> = [];
 
   async login() {
     PeerHelper.instance.create(this.address);
@@ -48,5 +48,9 @@ export class Tab1Page {
 
   close() {
     PeerHelper.instance.getPeer(this.otherAddress).close();
+  }
+
+  scanAddressList() {
+    PeerHelper.instance.scanAddressList();
   }
 }

@@ -53,7 +53,7 @@ export class SocketService extends AbstractPeerServer {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
     unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
-      this.message({ type, buffer, from: msg.from });
+      this.message({ type, buffer, otherAddress: msg.from });
     });
   }
 
@@ -67,7 +67,7 @@ export class SocketService extends AbstractPeerServer {
     this.wssSend(sendData);
   }
 
-  onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer; from: string }) => any;
+  onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer; otherAddress: string }) => any;
   wssSend(data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView) {
     if (this.wss && this.wss.readyState !== 1) throw new Error("socket server did not start");
     this.wss.send(data);

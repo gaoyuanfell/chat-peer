@@ -8,10 +8,12 @@ export enum AddressTableTypeMessage {
 @Type.d("AddressTableMessage")
 export class AddressTableMessage extends Message<AddressTableMessage> {
   static INC: number = 1;
-  @Field.d(AddressTableMessage.INC++, "string")
+  @Field.d(AddressTableMessage.INC++, "string", "repeated")
   addressList!: string[];
   @Field.d(AddressTableMessage.INC++, AddressTableTypeMessage)
   type!: AddressTableTypeMessage;
   @Field.d(AddressTableMessage.INC++, "string")
-  receiver!: string;
+  to!: string;
+  @Field.d(AddressTableMessage.INC++, "string")
+  from!: string;
 }

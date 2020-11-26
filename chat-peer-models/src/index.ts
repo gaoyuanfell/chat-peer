@@ -19,4 +19,5 @@ export {
   pickTypedArrayBuffer,
   packForwardBlocks,
   unpackForwardBlocks,
+  arrayDiff,
 } from "./func";

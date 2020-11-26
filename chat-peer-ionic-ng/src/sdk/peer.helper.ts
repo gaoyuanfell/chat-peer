@@ -1,13 +1,18 @@
 import {
   AddressTableMessage,
   AddressTableTypeMessage,
+  arrayDiff,
+  BridegMessage,
   DataBlockType,
   decodeMessage,
   encodeMessage,
+  IDataBlock,
   MsgTypes,
+  packForwardBlocks,
   PeerCandidate,
   PeerDescription,
-  PeerServer,
+  pickTypedArrayBuffer,
+  unpackForwardBlocks,
 } from "chat-peer-models";
 import { Peer } from "./peer";
 import { Pool } from "./pool";
@@ -41,7 +46,7 @@ export class PeerHelper {
   }
 
   getPeerList() {
-    return this.#pool.getAll();
+    return this.#pool.getAll(); //.filter(([_, peer]) => peer.connected);
   }
 
   /**
@@ -66,55 +71,55 @@ export class PeerHelper {
       this.#socket.wssSend(uint);
     });
 
-    this.#socket.onMessage = ({ type, buffer, from }) => {
-      let peer: Peer = this.#pool.get(from);
-      this.peerBindSendServer(peer);
-      switch (type) {
-        case DataBlockType.OFFER:
-          peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), from);
-          break;
-        case DataBlockType.ANSWER:
-          peer.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
-          break;
-        case DataBlockType.CANDIDATE:
-          peer.candidateHandler(PeerCandidate.decode(new Uint8Array(buffer)).toJSON());
-          break;
-      }
+    this.#socket.onMessage = ({ type, buffer, otherAddress }) => {
+      this.onSignal(type, buffer, otherAddress);
     };
   }
 
   /**
    * 主动发起连接
+   * otheAddress 连接地址
+   * bridgeAddress 桥接地址
    */
-  launch(receiver: string) {
-    if (this.address === receiver) return;
-    let peer: Peer = this.#pool.get(receiver);
+  launch(otheAddress: string, bridgeAddress?: string) {
+    if (this.address === otheAddress) return;
+    let peer: Peer = this.#pool.get(otheAddress);
     if (peer.connected) return;
     this.peerBindSendServer(peer);
-    peer.launchPeer(receiver);
+    peer.bridgeAddress = bridgeAddress;
+    peer.launchPeer(otheAddress);
   }
 
+  /**
+   * 注册对应的逻辑处理事件
+   */
   private peerBindSendServer(peer: Peer) {
     if (!peer.hasBindEvent) {
       peer.hasBindEvent = true;
-      peer.on("sendAnswer", ({ to, from, block }) => {
-        this.#socket.send(to, from, [block]);
+      peer.on("sendAnswer", ({ to, from, block, bridgeAddress }) => {
+        this.signalSend(to, from, block, bridgeAddress);
       });
-      peer.on("sendOffer", ({ to, from, block }) => {
-        this.#socket.send(to, from, [block]);
+      peer.on("sendOffer", ({ to, from, block, bridgeAddress }) => {
+        this.signalSend(to, from, block, bridgeAddress);
       });
-      peer.on("sendCandidate", ({ to, from, block }) => {
-        this.#socket.send(to, from, [block]);
+      peer.on("sendCandidate", ({ to, from, block, bridgeAddress }) => {
+        this.signalSend(to, from, block, bridgeAddress);
       });
       peer.on("closed", () => {
-        console.info("closed");
         this.#pool.remove(peer.to);
       });
-
+      peer.on("connected", () => {
+        /**
+         * 开始扫描这个节点下的地址表
+         */
+        // requestAnimationFrame(() => {
+        //   this.scanAddressList();
+        // });
+      });
       peer.on("message", (e) => {
         const data = e.data;
         let typeArr = new Uint8Array(data, 0, 1);
-        console.info(MsgTypes[typeArr[0]]);
+        console.info("MsgTypes:", MsgTypes[typeArr[0]]);
         switch (typeArr[0]) {
           case MsgTypes.ADDRESS_TABLE:
             this.onAddressTable(data);
@@ -127,21 +132,64 @@ export class PeerHelper {
     }
   }
 
+  /**
+   * 信令发送服务
+   * 服务节点模式 使用 socket 传输
+   * 本地节点模式 使用 rtc 传输
+   */
+  signalSend(to: string, from: string, block: IDataBlock, bridgeAddress: string) {
+    if (bridgeAddress) {
+      /**
+       * 桥接数据转发 采用数据打包后发送 减少转发次数
+       */
+      let model = new BridegMessage({
+        receiver: to,
+        to: bridgeAddress,
+        from: from,
+        path: [this.address],
+        data: packForwardBlocks([block]),
+      });
+      let sendArr = encodeMessage(MsgTypes.BRIDGE, model);
+      this.send(model.to, sendArr);
+    } else {
+      this.#socket.send(to, from, [block]);
+    }
+  }
+
+  /**
+   * 处理接收到的信令
+   */
+  onSignal(type: DataBlockType, buffer: ArrayBuffer, otherAddress: string, bridgeAddress?: string) {
+    let peer: Peer = this.#pool.get(otherAddress);
+    this.peerBindSendServer(peer);
+    switch (type) {
+      case DataBlockType.OFFER:
+        peer.bridgeAddress = bridgeAddress;
+        peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), otherAddress);
+        break;
+      case DataBlockType.ANSWER:
+        peer.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
+        break;
+      case DataBlockType.CANDIDATE:
+        peer.candidateHandler(PeerCandidate.decode(new Uint8Array(buffer)).toJSON());
+        break;
+    }
+  }
+
   create(address: string) {
     this.waitingConnection(address);
   }
 
-  /**
-   * 桥接数据转发 采用数据打包后发送 减少转发次数
-   */
-  transport() {}
-
-  send(receiver: string, data: ArrayBuffer) {
-    let peer: Peer = this.#pool.get(receiver);
+  send(otherAddress: string, data: ArrayBuffer) {
+    let peer: Peer = this.#pool.get(otherAddress);
     if (!peer!.connected) return;
     peer.channelSend(data);
   }
 
+  /**
+   * ADDRESS_TABLE类型的处理方法
+   * @param data
+   */
   onAddressTable(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
@@ -160,29 +208,82 @@ export class PeerHelper {
         this.addressTableResponse(msg);
         break;
     }
-    console.info(msg);
   }
 
+  /**
+   * BRIDGE类型的处理方法
+   */
+  onBridge(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.BRIDGE, dataArr);
+    /**
+     * 不是自己的消息 将消息转发出去
+     */
+    if (msg.receiver !== this.address) {
+      let path = msg.path;
+      path.push(this.address);
+      let model = new BridegMessage({
+        receiver: msg.receiver,
+        to: msg.receiver,
+        from: this.address,
+        path: path,
+        data: msg.data,
+      });
+      let sendArr = encodeMessage(MsgTypes.BRIDGE, model);
+      this.send(model.to, sendArr);
+      return;
+    }
+    console.info("path:", msg.path);
+    let otherAddress = msg.path[0];
+    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+      this.onSignal(type, buffer, otherAddress, msg.from);
+    });
+  }
+
+  /**
+   * 扫描地址表
+   */
+  scanAddressList() {
+    console.info("开始扫描了");
+    let list = this.getPeerList().map(([key]) => key);
+    for (let index = 0; index < list.length; index++) {
+      const addr = list[index];
+      let model = new AddressTableMessage({
+        type: AddressTableTypeMessage.REQUEST,
+        from: this.address,
+        to: addr,
+      });
+      let uint = encodeMessage(MsgTypes.ADDRESS_TABLE, model);
+      this.send(model.to, uint);
+    }
+  }
+
+  /**
+   * 发送自己的地址表
+   */
   private addressTableRequest(msg: AddressTableMessage) {
     let list = this.getPeerList().map(([key]) => key);
     let model = new AddressTableMessage({
       addressList: list,
       type: AddressTableTypeMessage.RESPONSE,
+      from: msg.to,
+      to: msg.from,
     });
     let uint = encodeMessage(MsgTypes.ADDRESS_TABLE, model);
-    this.send(msg.receiver, uint);
+    this.send(model.to, uint);
   }
 
-  // TODO
+  /**
+   * 收到地址表后 逐个发起连接
+   */
   private addressTableResponse(msg: AddressTableMessage) {
     let list = this.getPeerList().map(([key]) => key);
-
-    console.info(msg.addressList);
-  }
-
-  onBridge(data: ArrayBuffer) {
-    let dataArr = new Uint8Array(data, 1);
-    let msg = decodeMessage(MsgTypes.BRIDGE, dataArr);
-    console.info(msg);
+    list.push(this.address);
+    let diffArr = arrayDiff(list, msg.addressList);
+    console.info("发现节点：", diffArr);
+    for (let index = 0; index < diffArr.length; index++) {
+      const addr = diffArr[index];
+      this.launch(addr, msg.from);
+    }
   }
 }

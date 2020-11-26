@@ -7,6 +7,7 @@ export class Peer extends Subscribe {
   from: string;
   to: string;
   hasBindEvent: boolean; // 是否监听过发送信令
+  bridgeAddress: string; // 桥接地址
 
   get connected() {
     return this.rtcPeer.connectionState === "connected";
@@ -45,7 +46,6 @@ export class Peer extends Subscribe {
        * "gathering"	ICE代理正在收集连接候选者。
        * "complete"	ICE代理已完成候选人征集。如果发生需要收集新候选对象的情况，例如正在添加新接口或添加新ICE服务器，则状态将恢复为“聚集”以收集那些候选对象。
        */
-      console.info("onicegatheringstatechange", this.rtcPeer.iceGatheringState);
       this.emit("icegatheringstatechange", this.rtcPeer.iceGatheringState);
     };
 
@@ -59,8 +59,6 @@ export class Peer extends Subscribe {
        * "have-remote-pranswer"	已收到临时答复并成功应用了该答复，以响应先前通过呼叫发送和建立的要约setLocalDescription()。
        * "closed"  连接已关闭。 注意：此值已移入规范的2016年5月13日的RTCPeerConnectionState枚举中，因为它反映的状态，而RTCPeerConnection不是信令连接。现在，检测通过检查关闭的连接为connectionState要"closed"代替。
        */
-      console.info("onsignalingstatechange", this.rtcPeer.signalingState);
-
       this.emit("signalingstatechange", this.rtcPeer.signalingState);
     };
 
@@ -75,7 +73,7 @@ export class Peer extends Subscribe {
        * "disconnected"	检查以确保至少有一个组件仍然无法连接组件RTCPeerConnection。这比严格的测试要宽松一些，"failed"并且可能间歇性地触发并在可靠性较差的网络上或在临时断开连接时自发地解决。问题解决后，连接可能会返回到该"connected"状态。
        * "closed"	ICE代理RTCPeerConnection已关闭，不再处理请求。
        */
-      console.info("iceConnectionState", this.rtcPeer.iceConnectionState);
+      console.info("iceconnectionstatechange", this.rtcPeer.iceConnectionState);
       this.emit("iceconnectionstatechange", this.rtcPeer.iceConnectionState);
     };
 
@@ -92,8 +90,11 @@ export class Peer extends Subscribe {
       this.emit("connectionstatechange", this.rtcPeer.connectionState);
       switch (this.rtcPeer.connectionState) {
         case "new":
+          break;
         case "connecting":
+          break;
         case "connected":
+          this.emit("connected");
           break;
         case "closed":
         case "disconnected":
@@ -131,14 +132,12 @@ export class Peer extends Subscribe {
       this.emit("datachannel", event);
       let channel = event.channel;
       channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
-        console.info(event.data);
         this.emit("message", event);
       };
     };
 
     this.channel = this.rtcPeer.createDataChannel(this.from);
     this.channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
-      console.info(event.data);
       this.emit("message", event);
     };
   }
@@ -167,8 +166,10 @@ export class Peer extends Subscribe {
    */
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
-    await this.rtcPeer.setRemoteDescription(description);
-    await this.createAnswer();
+    if (!this.rtcPeer.remoteDescription) {
+      await this.rtcPeer.setRemoteDescription(description);
+      await this.createAnswer();
+    }
     this.sendAnswer();
   }
 
@@ -176,7 +177,9 @@ export class Peer extends Subscribe {
    * 接收到 answer 后 下个执行步骤
    */
   async answerHandler(description: RTCSessionDescriptionInit) {
-    await this.rtcPeer.setRemoteDescription(description);
+    if (!this.rtcPeer.remoteDescription) {
+      await this.rtcPeer.setRemoteDescription(description);
+    }
   }
 
   /**
@@ -191,6 +194,7 @@ export class Peer extends Subscribe {
    * 创建 offer 呼叫
    */
   private async createOffer() {
+    if (this.rtcPeer.localDescription) return;
     let offer = await this.rtcPeer.createOffer();
     await this.rtcPeer.setLocalDescription(offer);
   }
@@ -199,6 +203,7 @@ export class Peer extends Subscribe {
    * 创建 answer 应答
    */
   private async createAnswer() {
+    if (this.rtcPeer.localDescription) return;
     let answer = await this.rtcPeer.createAnswer();
     await this.rtcPeer.setLocalDescription(answer);
   }
@@ -211,19 +216,17 @@ export class Peer extends Subscribe {
     if (!offer) {
       throw new Error("offer not found");
     }
-
     let peerDescription = new PeerDescription({
       type: offer.type,
       sdp: offer.sdp,
     });
     let uintArr = PeerDescription.encode(peerDescription).finish();
-
     this.emit("sendOffer", {
       to: this.to,
       from: this.from,
       block: { type: DataBlockType.OFFER, payload: uintArr },
+      bridgeAddress: this.bridgeAddress,
     });
-
     console.info(`sendOffer 发送呼叫`, offer);
   }
 
@@ -235,19 +238,17 @@ export class Peer extends Subscribe {
     if (!answer) {
       throw new Error("answer not found");
     }
-
     let peerDescription = new PeerDescription({
       type: answer.type,
       sdp: answer.sdp,
     });
     let uintArr = PeerDescription.encode(peerDescription).finish();
-
     this.emit("sendAnswer", {
       to: this.to,
       from: this.from,
       block: { type: DataBlockType.ANSWER, payload: uintArr },
+      bridgeAddress: this.bridgeAddress,
     });
-
     console.info(`sendAnswer 发送回应`, answer);
   }
 
@@ -263,11 +264,11 @@ export class Peer extends Subscribe {
       usernameFragment: candidate.usernameFragment as string,
     });
     let uintArr = PeerCandidate.encode(peerCandidate).finish();
-
     this.emit("sendCandidate", {
       to: this.to,
       from: this.from,
       block: { type: DataBlockType.CANDIDATE, payload: uintArr },
+      bridgeAddress: this.bridgeAddress,
     });
     console.info(`sendCandidate 发送描述`, candidate);
   }

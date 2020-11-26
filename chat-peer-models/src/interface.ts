@@ -9,6 +9,7 @@ export interface IDataBlockTransport {
   to: string;
   from: string;
   block: IDataBlock;
+  bridgeAddress?: string;
 }
 
 export interface PeerServer {
@@ -16,7 +17,7 @@ export interface PeerServer {
   onMessage: (block: {
     type: DataBlockType;
     buffer: ArrayBuffer;
-    from: string;
+    otherAddress: string;
   }) => any;
   connent(...args: unknown[]): any;
   send(receiver: string, from: string, blocks: IDataBlock[]): any;

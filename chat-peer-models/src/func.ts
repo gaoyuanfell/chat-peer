@@ -121,5 +121,19 @@ export const pickTypedArrayBuffer = (bytes: Uint8Array) => {
     bytes.byteOffset + bytes.length * bytes.BYTES_PER_ELEMENT
   );
 };
-// TODO
-export const arrayDiff = <T>(current: Array<T>, diff: Array<T>) => {};
+
+export const arrayDiff = <T>(current: Array<T>, diff: Array<T>) => {
+  let set = new Set();
+  for (let index = 0; index < current.length; index++) {
+    const element = current[index];
+    set.add(element);
+  }
+  let diffArr = [];
+  for (let index = 0; index < diff.length; index++) {
+    const element = diff[index];
+    if (!set.has(element)) {
+      diffArr.push(element);
+    }
+  }
+  return diffArr;
+};

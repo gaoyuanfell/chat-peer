@@ -8,7 +8,6 @@ class TransferProcesser implements IMessageProcesser {
     let model = decodeMessage(MsgTypes.TRANSFER, data);
     let targetClient = userManager.get(model.to);
     if (targetClient) {
-      console.info(model);
       let sendData = encodeMessage(MsgTypes.TRANSFER, model);
       targetClient.send(sendData);
     }
