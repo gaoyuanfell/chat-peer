@@ -8,9 +8,8 @@ import {
   unpackForwardBlocks,
 } from "chat-peer-models";
 import { BusPool } from "./bus-pool";
-import { Peer } from "./peer";
 import { PeerHelper } from "./peer.helper";
-import { EmitTypeBus } from "./subscribe";
+import { PeerBus } from "./peer/bus-peer";
 
 const busPeerHelperSymbol = Symbol("BusPeerHelper");
 export class BusPeerHelper {
@@ -95,17 +94,17 @@ export class BusPeerHelper {
     };
   }
 
-  private peerBindSendEvent(peer: Peer<EmitTypeBus>, otherAddress: string) {
+  private peerBindSendEvent(peer: PeerBus, otherAddress: string) {
     if (peer.hasBindEvent) return;
     peer.hasBindEvent = true;
     let mainPeer = PeerHelper.instance.getPeer(otherAddress);
-    peer.on("sendBusOffer", (buffer) => {
+    peer.on("sendOffer", (buffer) => {
       mainPeer.channelSend(buffer);
     });
-    peer.on("sendBusAnswer", (buffer) => {
+    peer.on("sendAnswer", (buffer) => {
       mainPeer.channelSend(buffer);
     });
-    peer.on("sendBusCandidate", (buffer) => {
+    peer.on("sendCandidate", (buffer) => {
       mainPeer.channelSend(buffer);
     });
     peer.on("track", (event) => {

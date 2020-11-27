@@ -1,5 +1,4 @@
-import { Peer } from "./peer";
-import { EmitTypeBus } from "./subscribe";
+import { PeerBus } from "./peer/bus-peer";
 
 export class BusPool {
   address: string; // 自己的地址
@@ -7,13 +6,20 @@ export class BusPool {
     this.address = address;
   }
 
-  #pool = new Map<string, Map<string, Peer<EmitTypeBus>>>();
+  #pool = new Map<string, Map<string, PeerBus>>();
+
+  has(address: string, businessId: string) {
+    let bo = this.#pool.has(address);
+    if (!bo) return false;
+    let pool = this.#pool.get(address);
+    return pool.has(businessId);
+  }
 
   get(otherAddress: string, businessId: string) {
     let peers = this.#pool.get(otherAddress);
     if (!peers) peers = new Map();
     if (peers.has(businessId)) return peers.get(businessId);
-    let peer = new Peer(this.address, true);
+    let peer = new PeerBus(this.address);
     peer.businessId = businessId;
     peers.set(businessId, peer);
     this.#pool.set(otherAddress, peers);
@@ -31,5 +37,15 @@ export class BusPool {
         }
       }
     }
+  }
+
+  reset() {
+    for (const pool of this.#pool.values()) {
+      for (const peer of pool.values()) {
+        peer.close();
+      }
+      pool.clear();
+    }
+    this.#pool.clear();
   }
 }

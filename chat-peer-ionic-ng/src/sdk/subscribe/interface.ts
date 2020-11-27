@@ -36,25 +36,12 @@ export interface EmitTypeMainMap extends EmitTypeBaseMap {
 
 // 业务通道peer专用
 export interface EmitTypeBusMap extends EmitTypeBaseMap {
-  sendBusOffer: ArrayBuffer;
-  sendBusAnswer: ArrayBuffer;
-  sendBusCandidate: ArrayBuffer;
-  track: RTCTrackEvent;
-}
-
-// 所有的事件类型
-export interface EmitTypeMap extends EmitTypeBaseMap {
-  sendOffer: IDataBlockTransport;
-  sendAnswer: IDataBlockTransport;
-  sendCandidate: IDataBlockTransport;
-  sendBusOffer: ArrayBuffer;
-  sendBusAnswer: ArrayBuffer;
-  sendBusCandidate: ArrayBuffer;
+  sendOffer: ArrayBuffer;
+  sendAnswer: ArrayBuffer;
+  sendCandidate: ArrayBuffer;
   track: RTCTrackEvent;
 }
 
 export type EmitTypeMain = Partial<EmitTypeMainMap>;
 
 export type EmitTypeBus = Partial<EmitTypeBusMap>;
-
-export type EmitType = Partial<EmitTypeMap>;

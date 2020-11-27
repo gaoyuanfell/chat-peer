@@ -1,8 +1,7 @@
 import { BusPeerHelper } from "./../../sdk/bus-peer.helper";
 import { Component } from "@angular/core";
-import { Peer } from "src/sdk/peer";
 import { PeerHelper } from "src/sdk/peer.helper";
-import { EmitTypeMain } from "src/sdk/subscribe";
+import { PeerMain } from "src/sdk/peer/main-peer";
 
 @Component({
   selector: "app-tab1",
@@ -21,7 +20,7 @@ export class Tab1Page {
   mainPeer;
   peer;
 
-  peerList: Array<[string, Peer<EmitTypeMain>]> = [];
+  peerList: Array<[string, PeerMain]> = [];
 
   other;
   my;

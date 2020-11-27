@@ -1,5 +1,4 @@
-import { Peer } from "./peer";
-import { EmitTypeMain } from "./subscribe";
+import { PeerMain } from "./peer/main-peer";
 
 export class Pool {
   address: string; // 自己的地址
@@ -7,10 +6,10 @@ export class Pool {
     this.address = address;
   }
 
-  private pool = new Map<string, Peer<EmitTypeMain>>();
+  #pool = new Map<string, PeerMain>();
 
   has(address: string) {
-    return this.pool.has(address);
+    return this.#pool.has(address);
   }
 
   /**
@@ -18,25 +17,25 @@ export class Pool {
    * @param address 对方地址
    */
   get(address: string) {
-    let _pool = this.pool.get(address);
+    let _pool = this.#pool.get(address);
     if (!_pool) {
-      _pool = new Peer(this.address);
-      this.pool.set(address, _pool);
+      _pool = new PeerMain(this.address);
+      this.#pool.set(address, _pool);
     }
     return _pool;
   }
 
   getAll() {
-    return [...this.pool.entries()];
+    return [...this.#pool.entries()];
   }
 
   /**
    * @param address 对方地址
    */
   remove(address: string) {
-    if (this.pool.has(address)) {
-      let _pool = this.pool.get(address);
-      this.pool.delete(address);
+    if (this.#pool.has(address)) {
+      let _pool = this.#pool.get(address);
+      this.#pool.delete(address);
       if (_pool && _pool.connected) {
         _pool.close();
       }
@@ -44,9 +43,9 @@ export class Pool {
   }
 
   reset() {
-    for (const pool of this.pool.values()) {
+    for (const pool of this.#pool.values()) {
       pool.close();
     }
-    this.pool.clear();
+    this.#pool.clear();
   }
 }

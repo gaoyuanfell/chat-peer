@@ -1,13 +1,4 @@
-import {
-  PeerDescription,
-  PeerCandidate,
-  DataBlockType,
-  BusinessDataMessage,
-  packForwardBlocks,
-  encodeMessage,
-  MsgTypes,
-} from "chat-peer-models";
-import { EmitType, Subscribe } from "../subscribe";
+import { Subscribe } from "../subscribe";
 
 export abstract class Peer<T> extends Subscribe<T> {
   rtcPeer: RTCPeerConnection;
@@ -84,7 +75,7 @@ export abstract class Peer<T> extends Subscribe<T> {
   /**
    * 创建 offer 呼叫
    */
-  private async createOffer() {
+  protected async createOffer() {
     let option: RTCOfferOptions = {};
     if (this.rtcPeer.iceConnectionState !== "connected") {
       option.iceRestart = true;
@@ -96,7 +87,7 @@ export abstract class Peer<T> extends Subscribe<T> {
   /**
    * 创建 answer 应答
    */
-  private async createAnswer() {
+  protected async createAnswer() {
     let answer = await this.rtcPeer.createAnswer();
     await this.rtcPeer.setLocalDescription(answer);
   }
@@ -117,16 +108,9 @@ export abstract class Peer<T> extends Subscribe<T> {
    */
   abstract sendCandidate(candidate: RTCIceCandidate);
 
-  addTrack(stream: MediaStream) {
-    if (!stream) return;
-    stream.getTracks().forEach((track) => {
-      this.rtcPeer.addTrack(track, stream);
-    });
-  }
-
   abstract close();
 
-  private destroy() {
+  protected destroy() {
     this.clear();
   }
 }

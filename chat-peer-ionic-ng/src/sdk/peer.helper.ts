@@ -16,9 +16,9 @@ import {
   unpackForwardBlocks,
 } from "chat-peer-models";
 import { BusPeerHelper } from "./bus-peer.helper";
-import { Peer } from "./peer";
 import { Pool } from "./pool";
 import { SocketService } from "./socket";
+import { PeerMain } from "./peer/main-peer";
 
 const peerHelperSymbol = Symbol("PeerHelper");
 export class PeerHelper {
@@ -89,7 +89,7 @@ export class PeerHelper {
   /**
    * 注册对应的逻辑处理事件
    */
-  private peerBindSendEvent(peer: Peer<EmitTypeMain>) {
+  private peerBindSendEvent(peer: PeerMain) {
     if (peer.hasBindEvent) return;
     peer.hasBindEvent = true;
     peer.on("sendAnswer", ({ to, from, blocks, bridgeAddress }) => {
