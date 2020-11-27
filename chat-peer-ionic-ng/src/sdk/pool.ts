@@ -1,4 +1,5 @@
 import { Peer } from "./peer";
+import { EmitTypeMain } from "./subscribe";
 
 export class Pool {
   address: string; // 自己的地址
@@ -6,7 +7,7 @@ export class Pool {
     this.address = address;
   }
 
-  private pool = new Map<string, Peer>();
+  private pool = new Map<string, Peer<EmitTypeMain>>();
 
   has(address: string) {
     return this.pool.has(address);
@@ -37,7 +38,6 @@ export class Pool {
       let _pool = this.pool.get(address);
       this.pool.delete(address);
       if (_pool && _pool.connected) {
-        console.info("pool close");
         _pool.close();
       }
     }

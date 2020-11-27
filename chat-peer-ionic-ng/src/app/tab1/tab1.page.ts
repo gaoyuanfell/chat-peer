@@ -1,6 +1,8 @@
+import { BusPeerHelper } from "./../../sdk/bus-peer.helper";
 import { Component } from "@angular/core";
 import { Peer } from "src/sdk/peer";
 import { PeerHelper } from "src/sdk/peer.helper";
+import { EmitTypeMain } from "src/sdk/subscribe";
 
 @Component({
   selector: "app-tab1",
@@ -16,9 +18,13 @@ export class Tab1Page {
 
   wss: WebSocket;
 
-  peer: Peer;
+  mainPeer;
+  peer;
 
-  peerList: Array<[string, Peer]> = [];
+  peerList: Array<[string, Peer<EmitTypeMain>]> = [];
+
+  other;
+  my;
 
   async login() {
     PeerHelper.instance.create(this.address);
@@ -27,28 +33,33 @@ export class Tab1Page {
     }, 2000);
   }
 
-  showPeer(peer) {
-    console.info(peer);
-  }
-
-  send() {
-    // PeerHelper.instance.send(this.otherAddress, this.message);
-  }
-
   connet() {
-    PeerHelper.instance.launch(this.otherAddress);
-    // PeerHelper.getPeer(this.otherAddress).launchPeer(this.otherAddress);
-  }
-
-  close() {
-    PeerHelper.instance.getPeer(this.otherAddress).close();
+    this.mainPeer = PeerHelper.instance.launch(this.otherAddress);
   }
 
   scanAddressList() {
     PeerHelper.instance.scanAddressList();
   }
 
-  call() {
-    PeerHelper.instance.call(this.otherAddress);
+  async call() {
+    let { stream, peer } = await BusPeerHelper.instance.call(this.otherAddress);
+    this.my = stream;
+    console.info(peer);
+    this.peer = peer;
+    // this.my = await PeerHelper.instance.call(this.otherAddress);
+  }
+
+  send() {
+    this.peer.channelSend(this.message);
+    // PeerHelper.instance.send(this.otherAddress, this.message);
+  }
+
+  close() {
+    this.peer.close();
+    // PeerHelper.instance.getPeer(this.otherAddress).close();
+  }
+
+  showPeer(peer) {
+    console.info(peer);
   }
 }

@@ -1,21 +1,31 @@
-import { PeerDescription, PeerCandidate, DataBlockType } from "chat-peer-models";
-import { Subscribe } from "./subscribe";
+import {
+  PeerDescription,
+  PeerCandidate,
+  DataBlockType,
+  BusinessDataMessage,
+  packForwardBlocks,
+  encodeMessage,
+  MsgTypes,
+} from "chat-peer-models";
+import { Subscribe, EmitType } from "./subscribe";
 
-export class Peer extends Subscribe {
+export class Peer<T extends EmitType> extends Subscribe<T> {
   rtcPeer: RTCPeerConnection;
   channel: RTCDataChannel;
   from: string;
   to: string;
   hasBindEvent: boolean; // 是否监听过发送信令
   bridgeAddress: string; // 桥接地址
-
+  businessMode: boolean = false; // 是否业务模式 业务模式 则通过bus-peer.helper 工具类处理
+  businessId!: string; // 业务ID 和业务数据一起传输
   get connected() {
     return this.rtcPeer.connectionState === "connected";
   }
 
-  constructor(address: string) {
+  constructor(address: string, businessMode = false) {
     super();
     this.from = address;
+    this.businessMode = businessMode;
     this.rtcPeer = new RTCPeerConnection({
       iceServers: [
         // {
@@ -34,7 +44,6 @@ export class Peer extends Subscribe {
         },
       ],
     });
-
     this.peerEvent();
   }
 
@@ -94,14 +103,14 @@ export class Peer extends Subscribe {
         case "connecting":
           break;
         case "connected":
-          this.bridgeAddress = undefined;
           this.emit("connected");
           break;
         case "closed":
         case "disconnected":
         case "failed":
-          this.emit("closed");
-          this.destroy();
+          this.close();
+          // this.emit("closed");
+          // this.destroy();
           break;
       }
     };
@@ -117,12 +126,15 @@ export class Peer extends Subscribe {
     this.rtcPeer.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
       this.emit("icecandidate", event);
       if (event.candidate) {
+        if (this.businessMode) {
+          this.sendBusCandidate(event.candidate);
+          return;
+        }
         this.sendCandidate(event.candidate);
       }
     };
 
     this.rtcPeer.ontrack = (e: RTCTrackEvent) => {
-      console.info("ontrack", e);
       this.emit("track", e);
     };
 
@@ -131,6 +143,7 @@ export class Peer extends Subscribe {
      */
     this.rtcPeer.ondatachannel = (event: RTCDataChannelEvent) => {
       this.emit("datachannel", event);
+      this.bridgeAddress = undefined;
       let channel = event.channel;
       channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         this.emit("message", event);
@@ -159,6 +172,10 @@ export class Peer extends Subscribe {
   async launchPeer(address: string) {
     this.to = address;
     await this.createOffer();
+    if (this.businessMode) {
+      this.sendBusOffer();
+      return;
+    }
     this.sendOffer();
   }
 
@@ -167,10 +184,12 @@ export class Peer extends Subscribe {
    */
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
-    // if (!this.rtcPeer.remoteDescription) {
     await this.rtcPeer.setRemoteDescription(description);
     await this.createAnswer();
-    // }
+    if (this.businessMode) {
+      this.sendBusAnswer();
+      return;
+    }
     this.sendAnswer();
   }
 
@@ -178,9 +197,7 @@ export class Peer extends Subscribe {
    * 接收到 answer 后 下个执行步骤
    */
   async answerHandler(description: RTCSessionDescriptionInit) {
-    // if (!this.rtcPeer.remoteDescription) {
     await this.rtcPeer.setRemoteDescription(description);
-    // }
   }
 
   /**
@@ -195,8 +212,11 @@ export class Peer extends Subscribe {
    * 创建 offer 呼叫
    */
   private async createOffer() {
-    // if (this.rtcPeer.localDescription) return;
-    let offer = await this.rtcPeer.createOffer();
+    let option: RTCOfferOptions = {};
+    if (this.rtcPeer.iceConnectionState !== "connected") {
+      option.iceRestart = true;
+    }
+    let offer = await this.rtcPeer.createOffer(option);
     await this.rtcPeer.setLocalDescription(offer);
   }
 
@@ -204,7 +224,6 @@ export class Peer extends Subscribe {
    * 创建 answer 应答
    */
   private async createAnswer() {
-    // if (this.rtcPeer.localDescription) return;
     let answer = await this.rtcPeer.createAnswer();
     await this.rtcPeer.setLocalDescription(answer);
   }
@@ -225,10 +244,30 @@ export class Peer extends Subscribe {
     this.emit("sendOffer", {
       to: this.to,
       from: this.from,
-      block: { type: DataBlockType.OFFER, payload: uintArr },
+      blocks: [{ type: DataBlockType.OFFER, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
     console.info(`sendOffer 发送呼叫`, offer);
+  }
+
+  private sendBusOffer() {
+    let offer = this.rtcPeer.localDescription;
+    if (!offer) {
+      throw new Error("offer not found");
+    }
+    let peerDescription = new PeerDescription({
+      type: offer.type,
+      sdp: offer.sdp,
+    });
+    let uintArr = PeerDescription.encode(peerDescription).finish();
+    let model = new BusinessDataMessage({
+      receiver: this.to,
+      from: this.from,
+      businessId: this.businessId,
+      data: packForwardBlocks([{ type: DataBlockType.OFFER, payload: uintArr }]),
+    });
+    this.emit("sendBusOffer", encodeMessage(MsgTypes.BUSINESS, model));
+    console.info(`sendBusOffer 发送呼叫`, offer);
   }
 
   /**
@@ -247,10 +286,30 @@ export class Peer extends Subscribe {
     this.emit("sendAnswer", {
       to: this.to,
       from: this.from,
-      block: { type: DataBlockType.ANSWER, payload: uintArr },
+      blocks: [{ type: DataBlockType.ANSWER, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
     console.info(`sendAnswer 发送回应`, answer);
+  }
+
+  private sendBusAnswer() {
+    let answer = this.rtcPeer.localDescription;
+    if (!answer) {
+      throw new Error("answer not found");
+    }
+    let peerDescription = new PeerDescription({
+      type: answer.type,
+      sdp: answer.sdp,
+    });
+    let uintArr = PeerDescription.encode(peerDescription).finish();
+    let model = new BusinessDataMessage({
+      receiver: this.to,
+      from: this.from,
+      businessId: this.businessId,
+      data: packForwardBlocks([{ type: DataBlockType.ANSWER, payload: uintArr }]),
+    });
+    this.emit("sendBusAnswer", encodeMessage(MsgTypes.BUSINESS, model));
+    console.info(`sendBusAnswer 发送回应`, answer);
   }
 
   /**
@@ -268,15 +327,34 @@ export class Peer extends Subscribe {
     this.emit("sendCandidate", {
       to: this.to,
       from: this.from,
-      block: { type: DataBlockType.CANDIDATE, payload: uintArr },
+      blocks: [{ type: DataBlockType.CANDIDATE, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
     console.info(`sendCandidate 发送描述`, candidate);
   }
 
+  private sendBusCandidate(candidate: RTCIceCandidate) {
+    let peerCandidate = new PeerCandidate({
+      candidate: candidate.candidate,
+      sdpMLineIndex: candidate.sdpMLineIndex as number,
+      sdpMid: candidate.sdpMid as string,
+      usernameFragment: candidate.usernameFragment as string,
+    });
+    let uintArr = PeerCandidate.encode(peerCandidate).finish();
+    let model = new BusinessDataMessage({
+      receiver: this.to,
+      from: this.from,
+      businessId: this.businessId,
+      data: packForwardBlocks([{ type: DataBlockType.CANDIDATE, payload: uintArr }]),
+    });
+    this.emit("sendBusCandidate", encodeMessage(MsgTypes.BUSINESS, model));
+    console.info(`sendBusCandidate 发送描述`, candidate);
+  }
+
   addTrack(stream: MediaStream) {
+    if (!stream) return;
     stream.getTracks().forEach((track) => {
-      this.rtcPeer.addTrack(track);
+      this.rtcPeer.addTrack(track, stream);
     });
   }
 

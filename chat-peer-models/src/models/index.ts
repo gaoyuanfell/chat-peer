@@ -4,6 +4,7 @@ export { TransferMessage } from "./transfer.message";
 export { PeerDescription } from "./peer-description.message";
 export { PeerCandidate } from "./peer-candidate.message";
 export { BridegMessage } from "./brideg.message";
+export { BusinessDataMessage } from "./business-data.message";
 export {
   AddressTableMessage,
   AddressTableTypeMessage,

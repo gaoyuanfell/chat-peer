@@ -6,6 +6,7 @@ import {
   TransferMessage,
   AddressTableMessage,
   BridegMessage,
+  BusinessDataMessage,
 } from "./models";
 
 const DATAPACK_VERSION = 1;
@@ -74,6 +75,7 @@ type MessageTypeDict = {
   [MsgTypes.TRANSFER]: TransferMessage;
   [MsgTypes.ADDRESS_TABLE]: AddressTableMessage;
   [MsgTypes.BRIDGE]: BridegMessage;
+  [MsgTypes.BUSINESS]: BusinessDataMessage;
 };
 
 const messageTypeDict = {
@@ -82,6 +84,7 @@ const messageTypeDict = {
   [MsgTypes.TRANSFER]: TransferMessage,
   [MsgTypes.ADDRESS_TABLE]: AddressTableMessage,
   [MsgTypes.BRIDGE]: BridegMessage,
+  [MsgTypes.BUSINESS]: BusinessDataMessage,
 };
 
 /**

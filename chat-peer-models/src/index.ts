@@ -7,6 +7,7 @@ export {
   AddressTableMessage,
   AddressTableTypeMessage,
   BridegMessage,
+  BusinessDataMessage,
 } from "./models";
 
 export { MsgTypes, DataBlockType } from "./enum";

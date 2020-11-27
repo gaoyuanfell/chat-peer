@@ -8,7 +8,7 @@ export interface IDataBlock {
 export interface IDataBlockTransport {
   to: string;
   from: string;
-  block: IDataBlock;
+  blocks: [IDataBlock];
   bridgeAddress?: string;
 }
 

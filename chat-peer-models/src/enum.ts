@@ -4,6 +4,7 @@ export enum MsgTypes {
   TRANSFER, // 转发
   ADDRESS_TABLE, // 地址表
   BRIDGE, // 桥接
+  BUSINESS, // 业务数据 通过主通道
 }
 
 export enum DataBlockType {
