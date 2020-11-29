@@ -144,7 +144,7 @@ export class PeerBus extends Peer<EmitTypeBus> {
       data: packForwardBlocks([{ type: DataBlockType.OFFER, payload: uintArr }]),
     });
     this.emit("sendOffer", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendBusOffer 发送呼叫`, offer);
+    console.info(`sendOffer 发送呼叫`, offer);
   }
 
   sendAnswer() {
@@ -164,7 +164,7 @@ export class PeerBus extends Peer<EmitTypeBus> {
       data: packForwardBlocks([{ type: DataBlockType.ANSWER, payload: uintArr }]),
     });
     this.emit("sendAnswer", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendBusAnswer 发送回应`, answer);
+    console.info(`sendAnswer 发送回应`, answer);
   }
 
   sendCandidate(candidate: RTCIceCandidate) {
@@ -182,7 +182,7 @@ export class PeerBus extends Peer<EmitTypeBus> {
       data: packForwardBlocks([{ type: DataBlockType.CANDIDATE, payload: uintArr }]),
     });
     this.emit("sendCandidate", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendBusCandidate 发送描述`, candidate);
+    console.info(`sendCandidate 发送描述`, candidate);
   }
 
   addTrack(stream: MediaStream) {

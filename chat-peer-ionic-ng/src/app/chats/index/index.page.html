@@ -1,9 +1,21 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>index</ion-title>
+    <ion-title>节点</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="goNetwork()">
+        <ion-icon name="globe-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <button routerLink="/chats/chat">chat</button>
+  <ion-list>
+    <ion-virtual-scroll [items]="peerList$ | async">
+      <ion-item *virtualItem="let item">
+        <ion-label>{{item[0]}}</ion-label>
+        <ion-button (click)="chat(item[1])">聊天</ion-button>
+      </ion-item>
+    </ion-virtual-scroll>
+  </ion-list>
 </ion-content>

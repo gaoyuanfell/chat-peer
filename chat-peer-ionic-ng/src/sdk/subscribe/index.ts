@@ -1,2 +1,2 @@
-export { Subscribe } from "./subscribe";
-export { EmitTypeMain, EmitTypeBus, ISubscribe } from "./interface";
+export * from "./subscribe";
+export * from "./interface";

@@ -17,6 +17,10 @@ const routes: Routes = [
         loadChildren: () => import("./chat/chat.module").then((m) => m.ChatPageModule),
       },
       {
+        path: "network",
+        loadChildren: () => import("./network/network.module").then((m) => m.NetworkPageModule),
+      },
+      {
         path: "",
         redirectTo: "/chats/index",
         pathMatch: "full",

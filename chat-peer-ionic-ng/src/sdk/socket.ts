@@ -7,6 +7,8 @@ import {
   MsgTypes,
   packForwardBlocks,
   pickTypedArrayBuffer,
+  promiseOut,
+  promiseOutType,
   TransferMessage,
   unpackForwardBlocks,
 } from "chat-peer-models";
@@ -32,6 +34,7 @@ export class SocketService extends AbstractPeerServer {
           this.wss.close();
         }
         this.wss = undefined;
+        this.close();
       };
       wss.onmessage = (e) => {
         const data = e.data as ArrayBuffer;
@@ -40,12 +43,31 @@ export class SocketService extends AbstractPeerServer {
           case MsgTypes.TRANSFER:
             this.onTransfer(data);
             break;
+          case MsgTypes.SERVICE_PEER_TABLE:
+            this.onServerPeerList(data);
+            break;
         }
       };
       wss.onerror = (e) => {
         reject(e);
       };
     });
+  }
+
+  #promiseMap = new Map<string, promiseOutType>();
+
+  generatePromise<T>(businessId: string) {
+    let p = promiseOut<T>();
+    this.#promiseMap.set(businessId, p);
+    return p.promise;
+  }
+
+  onServerPeerList(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.SERVICE_PEER_TABLE, dataArr);
+    let p = this.#promiseMap.get(msg.businessId);
+    p.resolve(msg.addressList);
+    this.#promiseMap.delete(msg.businessId);
   }
 
   onTransfer(data: ArrayBuffer) {
@@ -65,6 +87,8 @@ export class SocketService extends AbstractPeerServer {
     this.wssSend(sendData);
   }
 
+  onError: () => any;
+  onClose: () => any;
   onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer; otherAddress: string }) => any;
   wssSend(data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView) {
     if (this.wss && this.wss.readyState !== 1) throw new Error("socket server did not start");

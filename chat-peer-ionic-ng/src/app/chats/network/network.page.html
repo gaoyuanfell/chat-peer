@@ -1,0 +1,21 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button>
+        <ion-back-button></ion-back-button>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>网络列表</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-virtual-scroll [items]="addressList$ | async">
+      <ion-item *virtualItem="let item">
+        <ion-label>节点地址： {{item}}</ion-label>
+        <ion-button *ngIf="!status(item)" (click)="connect(item)">连接</ion-button>
+      </ion-item>
+    </ion-virtual-scroll>
+  </ion-list>
+</ion-content>

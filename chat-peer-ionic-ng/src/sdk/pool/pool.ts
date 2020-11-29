@@ -1,4 +1,4 @@
-import { PeerMain } from "./peer/main-peer";
+import { PeerMain } from "../peer";
 
 export class Pool {
   address: string; // 自己的地址

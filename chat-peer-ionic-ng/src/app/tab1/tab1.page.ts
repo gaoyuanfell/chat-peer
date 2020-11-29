@@ -1,7 +1,6 @@
-import { BusPeerHelper } from "./../../sdk/bus-peer.helper";
 import { Component } from "@angular/core";
-import { PeerHelper } from "src/sdk/peer.helper";
-import { PeerMain } from "src/sdk/peer/main-peer";
+import { AlertController, ModalController } from "@ionic/angular";
+import { MainPeerHelper, BusPeerHelper, PeerMain } from "src/sdk";
 
 @Component({
   selector: "app-tab1",
@@ -13,7 +12,7 @@ export class Tab1Page {
   otherAddress: string;
   message: string;
 
-  constructor() {}
+  constructor(public alertController: AlertController) {}
 
   wss: WebSocket;
 
@@ -25,27 +24,73 @@ export class Tab1Page {
   other;
   my;
 
+  async presentAlert(handler1, handler2) {
+    const alert = await this.alertController.create({
+      header: "是否接听",
+      message: "来自小三的电话",
+      buttons: [
+        {
+          text: "取消",
+          role: "cancel",
+          handler: handler1,
+        },
+        {
+          text: "接听",
+          handler: handler2,
+        },
+      ],
+    });
+    await alert.present();
+  }
+
   async login() {
-    PeerHelper.instance.create(this.address);
+    MainPeerHelper.instance.create(this.address);
     setInterval(() => {
-      this.peerList = PeerHelper.instance.getPeerList();
+      this.peerList = MainPeerHelper.instance.getPeerList();
     }, 2000);
+
+    BusPeerHelper.instance.on("offer", ({ businessId, otherAddress, next }) => {
+      let peer = BusPeerHelper.instance.getBusPeer(otherAddress, businessId);
+
+      peer.on("track", (e) => {
+        this.other = e.streams[0];
+      });
+
+      const nextok = async () => {
+        let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        this.my = stream;
+        peer.addTrack(stream);
+        next();
+      };
+      this.presentAlert(
+        () => {},
+        () => {
+          nextok();
+        }
+      );
+    });
   }
 
   connet() {
-    this.mainPeer = PeerHelper.instance.launch(this.otherAddress);
+    this.mainPeer = MainPeerHelper.instance.launch(this.otherAddress);
   }
 
   scanAddressList() {
-    PeerHelper.instance.scanAddressList();
+    MainPeerHelper.instance.scanAddressList();
   }
 
   async call() {
-    let { stream, peer } = await BusPeerHelper.instance.call(this.otherAddress);
+    let businessId = Math.random().toString();
+    let peer = BusPeerHelper.instance.getBusPeer(this.otherAddress, businessId);
+    peer.on("track", (e) => {
+      this.other = e.streams[0];
+    });
+    let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    peer.addTrack(stream);
+    BusPeerHelper.instance.offer(this.otherAddress, businessId);
     this.my = stream;
     console.info(peer);
     this.peer = peer;
-    // this.my = await PeerHelper.instance.call(this.otherAddress);
   }
 
   send() {

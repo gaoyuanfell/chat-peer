@@ -33,14 +33,14 @@
       <ion-button (click)="call()">打电话</ion-button>
       <ion-button (click)="send()">发送</ion-button>
       <ion-button (click)="close()">关闭</ion-button>
-      
+      <ion-button (click)="presentAlert()">测试</ion-button>
+
       <ion-list>
         <ion-item *ngFor="let item of peerList">
           <ion-label (click)="showPeer(item[1])">{{item[0]}}{{item[1].connected}}</ion-label>
         </ion-item>
       </ion-list>
     </div>
-
 
     <video autoplay [srcObject]="my"></video>
     <video autoplay [srcObject]="other"></video>

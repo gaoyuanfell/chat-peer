@@ -1,0 +1,47 @@
+.content {
+  background-color: #252525;
+  width: 100%;
+  height: 100%;
+}
+
+ion-input {
+  color: #ccc;
+  text-align: center;
+  font-size: 22px;
+}
+
+ion-item {
+  --background: #252525;
+  --border-color: #252525;
+  --highlight-color-valid: #045f1b;
+  --transition: width 0.2s ease;
+}
+
+.input-pos {
+  position: absolute;
+  top: 40%;
+  left: 10%;
+  width: 80%;
+}
+
+.login-btn {
+  position: absolute;
+  bottom: 70px;
+  right: 60px;
+}
+
+ion-icon {
+  font-size: 40px;
+}
+
+ion-button {
+  border-radius: 50%;
+  overflow: hidden;
+  width: 55px;
+  height: 55px;
+  --background: red;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-end: 0;
+  --padding-start: 0;
+}

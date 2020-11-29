@@ -1,4 +1,4 @@
-import { PeerBus } from "./peer/bus-peer";
+import { PeerBus } from "../peer";
 
 export class BusPool {
   address: string; // 自己的地址

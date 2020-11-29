@@ -1,9 +1,15 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>login</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content>
-  <button routerLink="/contact">contact</button>
+  <div class="content">
+    <div class="input-pos">
+      <ion-item>
+        <ion-input [placeholder]="'请输入你的昵称'" [(ngModel)]="address"></ion-input>
+      </ion-item>
+    </div>
+
+    <div class="login-btn">
+      <ion-button (click)="login()">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
 </ion-content>

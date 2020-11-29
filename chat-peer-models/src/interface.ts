@@ -13,7 +13,9 @@ export interface IDataBlockTransport {
 }
 
 export interface PeerServer {
+  close(): any;
   message(data: unknown): any;
+  onClose: () => any;
   onMessage: (block: {
     type: DataBlockType;
     buffer: ArrayBuffer;

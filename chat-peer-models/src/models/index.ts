@@ -9,3 +9,5 @@ export {
   AddressTableMessage,
   AddressTableTypeMessage,
 } from "./address-table.message";
+
+export { ServerPeerTableMessage } from "./server-peer-table.message";

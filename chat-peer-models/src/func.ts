@@ -7,6 +7,7 @@ import {
   AddressTableMessage,
   BridegMessage,
   BusinessDataMessage,
+  ServerPeerTableMessage,
 } from "./models";
 
 const DATAPACK_VERSION = 1;
@@ -74,8 +75,10 @@ type MessageTypeDict = {
   [MsgTypes.LOGOUT]: LogoutMessage;
   [MsgTypes.TRANSFER]: TransferMessage;
   [MsgTypes.ADDRESS_TABLE]: AddressTableMessage;
+  [MsgTypes.SERVICE_PEER_TABLE]: ServerPeerTableMessage;
   [MsgTypes.BRIDGE]: BridegMessage;
   [MsgTypes.BUSINESS]: BusinessDataMessage;
+  [MsgTypes.BUSINESS_BEFORE]: TransferMessage;
 };
 
 const messageTypeDict = {
@@ -83,8 +86,10 @@ const messageTypeDict = {
   [MsgTypes.LOGOUT]: LogoutMessage,
   [MsgTypes.TRANSFER]: TransferMessage,
   [MsgTypes.ADDRESS_TABLE]: AddressTableMessage,
+  [MsgTypes.SERVICE_PEER_TABLE]: ServerPeerTableMessage,
   [MsgTypes.BRIDGE]: BridegMessage,
   [MsgTypes.BUSINESS]: BusinessDataMessage,
+  [MsgTypes.BUSINESS_BEFORE]: TransferMessage,
 };
 
 /**
@@ -140,3 +145,17 @@ export const arrayDiff = <T>(current: Array<T>, diff: Array<T>) => {
   }
   return diffArr;
 };
+
+export function promiseOut<T>() {
+  let resolve;
+  let reject;
+  let promise = new Promise<T>((r, j) => {
+    resolve = r;
+    reject = j;
+  });
+  return {
+    promise,
+    resolve,
+    reject,
+  };
+}

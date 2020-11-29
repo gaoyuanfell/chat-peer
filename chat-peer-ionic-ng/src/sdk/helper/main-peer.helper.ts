@@ -1,4 +1,3 @@
-import { EmitTypeMain } from "./subscribe/interface";
 import {
   AddressTableMessage,
   AddressTableTypeMessage,
@@ -16,25 +15,33 @@ import {
   unpackForwardBlocks,
 } from "chat-peer-models";
 import { BusPeerHelper } from "./bus-peer.helper";
-import { Pool } from "./pool";
-import { SocketService } from "./socket";
-import { PeerMain } from "./peer/main-peer";
+import { Pool } from "../pool";
+import { SocketService } from "../socket";
+import { PeerMain } from "../peer";
+import { Subscribe } from "../subscribe";
+import { EmitTypeMainHelper } from "../subscribe";
 
 const peerHelperSymbol = Symbol("PeerHelper");
-export class PeerHelper {
+export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   #pool: Pool;
   #socket: SocketService;
-  [peerHelperSymbol]: PeerHelper;
+  [peerHelperSymbol]: MainPeerHelper;
 
   constructor() {
-    if (!PeerHelper[peerHelperSymbol]) {
-      PeerHelper[peerHelperSymbol] = this;
+    super();
+    if (!MainPeerHelper[peerHelperSymbol]) {
+      MainPeerHelper[peerHelperSymbol] = this;
     }
-    return PeerHelper[peerHelperSymbol];
+    return MainPeerHelper[peerHelperSymbol];
   }
 
   static get instance() {
-    return new PeerHelper();
+    return new MainPeerHelper();
+  }
+
+  has(address: string) {
+    if (!address) throw new Error("address connot be empty");
+    return this.#pool.has(address);
   }
 
   getPeer(address: string) {
@@ -47,28 +54,58 @@ export class PeerHelper {
   }
 
   getPeerList() {
+    if (!this.#pool) return [];
     return this.#pool.getAll(); //.filter(([_, peer]) => peer.connected);
   }
+
+  getServerPeerList() {
+    let businessId = Math.random().toString();
+    let uint = encodeMessage(MsgTypes.SERVICE_PEER_TABLE, {
+      businessId: businessId,
+    });
+    this.socket.wssSend(uint);
+    return this.socket.generatePromise<Array<string>>(businessId);
+  }
+
+  get socket() {
+    // if (!this.#socket) throw new Error("the main pipe must be connected");
+    return this.#socket;
+  }
+
+  // get pool() {
+  //   if (!this.#pool) throw new Error("method waitingConnection needs to be executed first");
+  //   return this.#pool;
+  // }
 
   /**
    * 等待连接
    */
   private waitingConnection(address: string) {
-    this.#pool = new Pool(address);
-    /**
-     * 信令服务 socket
-     */
-    this.#socket = new SocketService();
-    this.#socket.connent().then(() => {
-      let uint = encodeMessage(MsgTypes.LOGIN, {
-        address: address,
-      });
-      this.#socket.wssSend(uint);
+    return new Promise<boolean>((resolve, reject) => {
+      this.#pool = new Pool(address);
+      /**
+       * 信令服务 socket
+       */
+      this.#socket = new SocketService();
+      this.#socket.connent().then(
+        () => {
+          let uint = encodeMessage(MsgTypes.LOGIN, {
+            address: address,
+          });
+          this.#socket.wssSend(uint);
+          resolve(true);
+        },
+        () => {
+          reject(false);
+        }
+      );
+      this.#socket.onClose = () => {
+        reject(false);
+      };
+      this.#socket.onMessage = ({ type, buffer, otherAddress }) => {
+        this.onSignal(type, buffer, otherAddress);
+      };
     });
-
-    this.#socket.onMessage = ({ type, buffer, otherAddress }) => {
-      this.onSignal(type, buffer, otherAddress);
-    };
   }
 
   /**
@@ -77,9 +114,9 @@ export class PeerHelper {
    * bridgeAddress 桥接地址
    */
   launch(otheAddress: string, bridgeAddress?: string) {
-    if (this.address === otheAddress) return;
+    if (this.address === otheAddress) throw new Error(`you can't connect to yourself`);
     let peer = this.#pool.get(otheAddress);
-    if (peer.connected) return;
+    if (peer.connected) return peer;
     this.peerBindSendEvent(peer);
     peer.bridgeAddress = bridgeAddress;
     peer.launchPeer(otheAddress);
@@ -103,6 +140,10 @@ export class PeerHelper {
     });
     peer.on("closed", () => {
       this.#pool.remove(peer.to);
+      this.emit("peerClosed", peer);
+    });
+    peer.on("connected", () => {
+      this.emit("peerConnected", peer);
     });
     peer.on("datachannel", () => {
       /**
@@ -122,7 +163,10 @@ export class PeerHelper {
           this.onBridge(data);
           break;
         case MsgTypes.BUSINESS:
-          BusPeerHelper.instance.onMainMessage(data);
+          BusPeerHelper.instance.onMainBusiness(data);
+          break;
+        case MsgTypes.BUSINESS_BEFORE:
+          BusPeerHelper.instance.onMainBusinessBefore(data);
           break;
       }
     });
@@ -148,7 +192,7 @@ export class PeerHelper {
       let sendArr = encodeMessage(MsgTypes.BRIDGE, model);
       this.send(model.to, sendArr);
     } else {
-      this.#socket.send(to, from, blocks);
+      this.socket.send(to, from, blocks);
     }
   }
 
@@ -173,8 +217,8 @@ export class PeerHelper {
   }
 
   create(address: string) {
-    this.waitingConnection(address);
-    BusPeerHelper.instance.create(address);
+    BusPeerHelper.instance.createPool(address);
+    return this.waitingConnection(address);
   }
 
   send(otherAddress: string, data: ArrayBuffer) {
@@ -286,3 +330,5 @@ export class PeerHelper {
     }
   }
 }
+
+export const mainPeerHelper = MainPeerHelper.instance;

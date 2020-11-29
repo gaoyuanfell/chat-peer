@@ -17,6 +17,9 @@ export class Subscribe<Q> implements ISubscribe<Q> {
     if (!fnArr) fnArr = [];
     fnArr.push(listener.bind(this));
     this.#map.set(type as string, fnArr);
+    return () => {
+      this.delete(type, listener);
+    };
   }
 
   once<T extends keyof Q>(type: T, listener: (this: Subscribe<Q>, ev: Q[T]) => any) {
@@ -31,6 +34,14 @@ export class Subscribe<Q> implements ISubscribe<Q> {
 
     fnArr.push(_fn);
     this.#map.set(type as string, fnArr);
+  }
+
+  delete<T extends keyof Q>(type: T, listener: (this: Subscribe<Q>, ev: Q[T]) => any) {
+    let fnArr = this.#map.get(type as string);
+    let index = fnArr.indexOf(listener);
+    if (index !== -1) {
+      fnArr.splice(index, 1);
+    }
   }
 
   clear() {

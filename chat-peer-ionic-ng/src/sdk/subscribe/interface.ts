@@ -1,4 +1,5 @@
 import { IDataBlockTransport } from "chat-peer-models";
+import { PeerMain } from "../peer";
 
 export interface ISubscribe<Q> {
   emit<T extends keyof Q>(type: T, data?: Q[T]);
@@ -6,6 +7,8 @@ export interface ISubscribe<Q> {
   on<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
 
   once<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
+
+  delete<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
 
   clear();
 }
@@ -42,6 +45,26 @@ export interface EmitTypeBusMap extends EmitTypeBaseMap {
   track: RTCTrackEvent;
 }
 
+export interface EmitTypeBusHelperMap {
+  track: RTCTrackEvent;
+  message: MessageEvent<ArrayBuffer>;
+  closed: any;
+  offer: { next: (constraints?: MediaStreamConstraints) => any; otherAddress: string; businessId: string };
+  mainMessage: {
+    buffer: ArrayBuffer;
+    otherAddress: string;
+  };
+}
+
+export interface EmitTypeMainHelperMap {
+  peerConnected: PeerMain;
+  peerClosed: PeerMain;
+}
+
 export type EmitTypeMain = Partial<EmitTypeMainMap>;
 
 export type EmitTypeBus = Partial<EmitTypeBusMap>;
+
+export type EmitTypeBusHelper = Partial<EmitTypeBusHelperMap>;
+
+export type EmitTypeMainHelper = Partial<EmitTypeMainHelperMap>;
