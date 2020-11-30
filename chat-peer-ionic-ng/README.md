@@ -33,3 +33,13 @@ ng new testAngular --style=less --routing=true --skipTests=true --viewEncapsulat
 ng g c ../pages/mine/index --skipTests=true --style=less --selector=ifm-mine-page --type=page
 
 https://www.cnblogs.com/whitewolf/p/zone-js.html
+
+中国银行 6942.22
+-154.64
+
+14002.5
+65273.02
+
+平安 50011.5
+
+微信 68.32

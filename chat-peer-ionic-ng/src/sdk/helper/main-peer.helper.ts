@@ -14,12 +14,12 @@ import {
   pickTypedArrayBuffer,
   unpackForwardBlocks,
 } from "chat-peer-models";
-import { BusPeerHelper } from "./bus-peer.helper";
 import { Pool } from "../pool";
 import { SocketService } from "../socket";
 import { PeerMain } from "../peer";
 import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
+import { peerSubscribe } from "./peer-subscribe";
 
 const peerHelperSymbol = Symbol("PeerHelper");
 export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
@@ -47,6 +47,10 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   getPeer(address: string) {
     if (!address) throw new Error("address connot be empty");
     return this.#pool.get(address);
+  }
+
+  get pool() {
+    return this.#pool;
   }
 
   get address() {
@@ -80,7 +84,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   /**
    * 等待连接
    */
-  private waitingConnection(address: string) {
+  waitingConnection(address: string) {
     return new Promise<boolean>((resolve, reject) => {
       this.#pool = new Pool(address);
       /**
@@ -163,10 +167,12 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
           this.onBridge(data);
           break;
         case MsgTypes.BUSINESS:
-          BusPeerHelper.instance.onMainBusiness(data);
+          peerSubscribe.emit("onMainBusiness", data);
+          // BusPeerHelper.instance.onMainBusiness(data);
           break;
         case MsgTypes.BUSINESS_BEFORE:
-          BusPeerHelper.instance.onMainBusinessBefore(data);
+          peerSubscribe.emit("onMainBusinessBefore", data);
+          // BusPeerHelper.instance.onMainBusinessBefore(data);
           break;
       }
     });
@@ -216,10 +222,10 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     }
   }
 
-  create(address: string) {
-    BusPeerHelper.instance.createPool(address);
-    return this.waitingConnection(address);
-  }
+  // create(address: string) {
+  //   BusPeerHelper.instance.createPool(address);
+  //   return this.waitingConnection(address);
+  // }
 
   send(otherAddress: string, data: ArrayBuffer) {
     let peer = this.#pool.get(otherAddress);
@@ -276,7 +282,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     }
     console.info("path:", msg.path);
     let otherAddress = msg.path[0]; // 数据发送者
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
       console.info(`收到 ${msg.path[0]} => ${msg.path[msg.path.length - 1]} 类型 ${DataBlockType[type]}`);
       this.onSignal(type, buffer, otherAddress, msg.from);
     });

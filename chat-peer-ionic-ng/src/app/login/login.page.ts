@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
+import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
-import { MainPeerHelper } from "src/sdk";
+import { PeerHelper } from "src/sdk";
 import { UserService } from "src/services/user.service";
 
 @Component({
@@ -9,16 +10,21 @@ import { UserService } from "src/services/user.service";
   styleUrls: ["./login.page.scss"],
 })
 export class LoginPage implements OnInit {
-  constructor(private router: Router, private user: UserService) {}
+  constructor(private router: Router, private user: UserService, private title: Title) {
+    this.peerHelper = new PeerHelper();
+  }
+
+  peerHelper: PeerHelper;
 
   ngOnInit() {}
 
   address: string;
 
   login() {
+    let t = this.title.getTitle();
+    this.title.setTitle(`${t} | ${this.address}`);
     this.user.setCurrentAddress(this.address);
-
-    MainPeerHelper.instance.create(this.address);
+    this.peerHelper.create(this.address);
     this.router.navigate(["/chats"]);
   }
 }

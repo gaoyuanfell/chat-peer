@@ -73,7 +73,7 @@ export class SocketService extends AbstractPeerServer {
   onTransfer(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
       this.message({ type, buffer, otherAddress: msg.from });
     });
   }

@@ -13,15 +13,14 @@ import {
 } from "@angular/router";
 import { Observable } from "rxjs";
 import { MainPeerHelper } from "src/sdk";
-import { UserService } from "./user.service";
 
 @Injectable({ providedIn: "root" })
 export class AuthGuard implements CanActivate, CanActivateChild, CanLoad, CanDeactivate<any> {
-  constructor(private router: Router, private user: UserService) {}
+  constructor(private router: Router) {}
 
   canLoadFun() {
-    let socket = MainPeerHelper.instance.socket;
-    if (!socket) return this.router.navigate(["/login"]);
+    // let socket = MainPeerHelper.instance.socket;
+    // if (!socket) return this.router.navigate(["/login"]);
     return true;
   }
 

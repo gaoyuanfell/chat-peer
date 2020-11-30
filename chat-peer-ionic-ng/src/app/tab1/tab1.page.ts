@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { AlertController, ModalController } from "@ionic/angular";
-import { MainPeerHelper, BusPeerHelper, PeerMain } from "src/sdk";
+import { MainPeerHelper, BusPeerHelper, PeerMain, PeerHelper } from "src/sdk";
 
 @Component({
   selector: "app-tab1",
@@ -11,8 +11,11 @@ export class Tab1Page {
   address: string;
   otherAddress: string;
   message: string;
+  peerHelper: PeerHelper;
 
-  constructor(public alertController: AlertController) {}
+  constructor(public alertController: AlertController) {
+    this.peerHelper = new PeerHelper();
+  }
 
   wss: WebSocket;
 
@@ -44,7 +47,7 @@ export class Tab1Page {
   }
 
   async login() {
-    MainPeerHelper.instance.create(this.address);
+    this.peerHelper.create(this.address);
     setInterval(() => {
       this.peerList = MainPeerHelper.instance.getPeerList();
     }, 2000);

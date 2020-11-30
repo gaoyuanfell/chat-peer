@@ -1,6 +1,8 @@
-export enum busMessageType {
+export enum BusMessageType {
   CHAT_REQUEST,
   CHAT_RESPONSE,
-  video_REQUEST,
-  video_RESPONSE,
+  VIDEO_REQUEST,
+  VIDEO_RESPONSE,
 }
+
+export enum DataBusBlockType {}

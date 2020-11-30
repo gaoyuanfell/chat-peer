@@ -5,12 +5,24 @@
         <ion-back-button></ion-back-button>
       </ion-button>
     </ion-buttons>
-    <ion-title>chat</ion-title>
+    <ion-title>{{peer?.to}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div></div>
+  <div class="message-box">
+    <div class="message-bubble">
+      <ion-virtual-scroll [items]="messageList">
+        <div class="bubble-item" *virtualItem="let item" [class.self]="item.self">
+          <ion-avatar></ion-avatar>
+          <div class="content">{{item.content}}</div>
+        </div>
+      </ion-virtual-scroll>
+    </div>
 
-  <div></div>
+    <div class="input-box">
+      <ion-input [(ngModel)]="message"> </ion-input>
+      <ion-button>发送</ion-button>
+    </div>
+  </div>
 </ion-content>

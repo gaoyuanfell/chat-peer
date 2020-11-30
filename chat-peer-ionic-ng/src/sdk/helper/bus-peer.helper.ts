@@ -14,12 +14,17 @@ import { PeerBus } from "../peer";
 import { BusPool } from "../pool";
 import { EmitTypeBusHelper, Subscribe } from "../subscribe";
 import { MainPeerHelper } from "./main-peer.helper";
+import { peerSubscribe } from "./peer-subscribe";
 
 const busPeerHelperSymbol = Symbol("BusPeerHelper");
 export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   [busPeerHelperSymbol]: BusPeerHelper;
 
   #pool: BusPool;
+
+  get pool() {
+    return this.#pool;
+  }
 
   get address() {
     return this.#pool!.address;
@@ -39,23 +44,32 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
 
   createPool(address: string) {
     this.#pool = new BusPool(address);
+
+    peerSubscribe.on("onMainBusiness", (buffer: ArrayBuffer) => {
+      this.onMainBusiness(buffer);
+    });
+
+    peerSubscribe.on("onMainBusinessBefore", (buffer: ArrayBuffer) => {
+      this.onMainBusinessBefore(buffer);
+    });
   }
 
   // 主通道消息
   onMainBusiness(buffer: ArrayBuffer) {
     let dataArr = new Uint8Array(buffer, 1);
     let msg = decodeMessage(MsgTypes.BUSINESS, dataArr);
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, buffer }) => {
+    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
       this.onSignal(type, buffer, msg.from, msg.businessId);
     });
   }
 
-  // 用户主动发送的  主通道消息
+  // 用户主动发送的业务消息  主通道消息
   onMainBusinessBefore(buffer: ArrayBuffer) {
     let dataArr = new Uint8Array(buffer, 1);
     let msg = decodeMessage(MsgTypes.BUSINESS_BEFORE, dataArr);
+
     this.emit("mainMessage", {
-      buffer: msg.data,
+      buffer: pickTypedArrayBuffer(msg.data),
       otherAddress: msg.from,
     });
   }
@@ -91,11 +105,8 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     console.info("DataBlockType", DataBlockType[type]);
     switch (type) {
       case DataBlockType.OFFER:
-        const next = () => {
-          this.answer(otherAddress, businessId);
-          peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), otherAddress);
-        };
-        this.emit("offer", { otherAddress, businessId, next });
+        this.answer(otherAddress, businessId);
+        peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), otherAddress);
         break;
       case DataBlockType.ANSWER:
         peer.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
@@ -117,7 +128,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
 
   answer(otherAddress: string, businessId: string) {
     let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
-    if (!mainPeer.connected) throw new Error("peer is not connected");
+    if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let peer = this.#pool.get(otherAddress, businessId);
     this.peerBindSendEvent(peer, otherAddress);
     return peer;

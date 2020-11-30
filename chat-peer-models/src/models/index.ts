@@ -1,13 +1,12 @@
-export { LoginMessage } from "./login.message";
-export { LogoutMessage } from "./logout.message";
-export { TransferMessage } from "./transfer.message";
-export { PeerDescription } from "./peer-description.message";
-export { PeerCandidate } from "./peer-candidate.message";
-export { BridegMessage } from "./brideg.message";
-export { BusinessDataMessage } from "./business-data.message";
-export {
-  AddressTableMessage,
-  AddressTableTypeMessage,
-} from "./address-table.message";
+export * from "./login.message";
+export * from "./logout.message";
+export * from "./transfer.message";
+export * from "./peer-description.message";
+export * from "./peer-candidate.message";
+export * from "./brideg.message";
+export * from "./business-data.message";
+export * from "./address-table.message";
 
-export { ServerPeerTableMessage } from "./server-peer-table.message";
+export * from "./server-peer-table.message";
+
+export * from "./chat.message";

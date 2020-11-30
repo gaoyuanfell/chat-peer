@@ -127,6 +127,7 @@ export class PeerBus extends Peer<EmitTypeBus> {
     await this.createAnswer();
     this.sendAnswer();
   }
+
   sendOffer() {
     let offer = this.rtcPeer.localDescription;
     if (!offer) {

@@ -12,7 +12,9 @@ import {
 
 const DATAPACK_VERSION = 1;
 
-const createForwardDataPack = (blocks: IDataBlock[]) => {
+function createForwardDataPack<
+  T extends { type: number; payload: ArrayBuffer }
+>(blocks: T[]) {
   const sumLength =
     blocks.reduce((p, c) => p + c.payload.byteLength + 1 + 4, 0) + 16;
   const pack = new Uint8Array(sumLength);
@@ -21,9 +23,12 @@ const createForwardDataPack = (blocks: IDataBlock[]) => {
   const count = new Uint16Array(pack.buffer, 4, 1);
   count[0] = blocks.length;
   return pack;
-};
+}
 
-const writeForwardBlocks = (buffer: ArrayBuffer, blocks: IDataBlock[]) => {
+function writeForwardBlocks<T extends { type: number; payload: ArrayBuffer }>(
+  buffer: ArrayBuffer,
+  blocks: T[]
+) {
   const index = new Uint32Array(buffer, 16, blocks.length);
   const payload = new Uint8Array(buffer, 16 + blocks.length * 4);
   let offset = 0;
@@ -34,18 +39,20 @@ const writeForwardBlocks = (buffer: ArrayBuffer, blocks: IDataBlock[]) => {
     payload.set(new Uint8Array(block.payload), offset + 1);
     offset += block.payload.byteLength + 1;
   }
-};
+}
 
-export const packForwardBlocks = (blocks: IDataBlock[]) => {
+export function packForwardBlocks<
+  T extends { type: number; payload: ArrayBuffer }
+>(blocks: T[]) {
   let pack = createForwardDataPack(blocks);
   writeForwardBlocks(pack.buffer, blocks);
   return pack;
-};
+}
 
-export const unpackForwardBlocks = (
+export function unpackForwardBlocks(
   data: ArrayBuffer,
-  blockFn?: (block: { type: DataBlockType; buffer: ArrayBuffer }) => any
-) => {
+  blockFn?: (block: { type: number; payload: ArrayBuffer }) => any
+) {
   const version = new Uint32Array(data, 0, 1);
   let blocks = [];
   if (DATAPACK_VERSION !== version[0]) {
@@ -62,13 +69,13 @@ export const unpackForwardBlocks = (
     const blockBuf = data.slice(offset + headLen + 1, end + headLen);
     let block = {
       type: type,
-      buffer: blockBuf,
+      payload: blockBuf,
     };
     blockFn && blockFn(block);
     blocks.push(block);
   }
   return blocks;
-};
+}
 
 type MessageTypeDict = {
   [MsgTypes.LOGIN]: LoginMessage;
