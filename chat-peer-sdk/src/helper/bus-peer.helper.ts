@@ -20,22 +20,22 @@ const busPeerHelperSymbol = Symbol("BusPeerHelper");
 export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   [busPeerHelperSymbol]: BusPeerHelper;
 
-  #pool: BusPool;
+  private _pool!: BusPool;
 
   get pool() {
-    return this.#pool;
+    return this._pool;
   }
 
   get address() {
-    return this.#pool!.address;
+    return this._pool!.address;
   }
 
   constructor() {
     super();
-    if (!BusPeerHelper[busPeerHelperSymbol]) {
-      BusPeerHelper[busPeerHelperSymbol] = this;
+    if (!(BusPeerHelper as any)[busPeerHelperSymbol]) {
+      (BusPeerHelper as any)[busPeerHelperSymbol] = this;
     }
-    return BusPeerHelper[busPeerHelperSymbol];
+    return (BusPeerHelper as any)[busPeerHelperSymbol];
   }
 
   static get instance() {
@@ -43,7 +43,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   }
 
   createPool(address: string) {
-    this.#pool = new BusPool(address);
+    this._pool = new BusPool(address);
 
     peerSubscribe.on("onMainBusiness", (buffer: ArrayBuffer) => {
       this.onMainBusiness(buffer);
@@ -58,9 +58,12 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   onMainBusiness(buffer: ArrayBuffer) {
     let dataArr = new Uint8Array(buffer, 1);
     let msg = decodeMessage(MsgTypes.BUSINESS, dataArr);
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
-      this.onSignal(type, buffer, msg.from, msg.businessId);
-    });
+    unpackForwardBlocks(
+      pickTypedArrayBuffer(msg.data),
+      ({ type, payload: buffer }) => {
+        this.onSignal(type, buffer, msg.from, msg.businessId);
+      }
+    );
   }
 
   // 用户主动发送的业务消息  主通道消息
@@ -94,33 +97,45 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
    * 获取对应业务peer
    */
   getBusPeer(otherAddress: string, businessId: string) {
-    return this.#pool.get(otherAddress, businessId);
+    return this._pool.get(otherAddress, businessId);
   }
 
   /** // TODO 修改 case DataBlockType.OFFER:
    * 处理接收到的信令
    */
-  private onSignal(type: DataBlockType, buffer: ArrayBuffer, otherAddress: string, businessId: string) {
-    let peer = this.#pool.get(otherAddress, businessId);
+  private onSignal(
+    type: DataBlockType,
+    buffer: ArrayBuffer,
+    otherAddress: string,
+    businessId: string
+  ) {
+    let peer = this._pool.get(otherAddress, businessId);
     console.info("DataBlockType", DataBlockType[type]);
     switch (type) {
       case DataBlockType.OFFER:
         this.answer(otherAddress, businessId);
-        peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), otherAddress);
+        peer.offerHandler(
+          PeerDescription.decode(new Uint8Array(buffer)).toJSON(),
+          otherAddress
+        );
         break;
       case DataBlockType.ANSWER:
-        peer.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
+        peer.answerHandler(
+          PeerDescription.decode(new Uint8Array(buffer)).toJSON()
+        );
         break;
       case DataBlockType.CANDIDATE:
-        peer.candidateHandler(PeerCandidate.decode(new Uint8Array(buffer)).toJSON());
+        peer.candidateHandler(
+          PeerCandidate.decode(new Uint8Array(buffer)).toJSON()
+        );
         break;
     }
   }
 
-  offer(otherAddress: string, businessId) {
+  offer(otherAddress: string, businessId: string) {
     let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
-    if (!mainPeer.connected) throw new Error("peer is not connected");
-    let peer = this.#pool.get(otherAddress, businessId);
+    if (!mainPeer.connected) throw new Error("mainPeer is not connected");
+    let peer = this._pool.get(otherAddress, businessId);
     this.peerBindSendEvent(peer, otherAddress);
     peer.launchPeer(otherAddress);
     return peer;
@@ -129,7 +144,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   answer(otherAddress: string, businessId: string) {
     let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
     if (!mainPeer.connected) throw new Error("mainPeer is not connected");
-    let peer = this.#pool.get(otherAddress, businessId);
+    let peer = this._pool.get(otherAddress, businessId);
     this.peerBindSendEvent(peer, otherAddress);
     return peer;
   }
@@ -155,7 +170,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
       console.info(event.data);
     });
     peer.on("closed", () => {
-      this.#pool.remove(peer.to, peer.businessId);
+      this._pool.remove(peer.to, peer.businessId);
       this.emit("closed");
     });
   }

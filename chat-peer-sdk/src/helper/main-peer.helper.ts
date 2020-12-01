@@ -21,18 +21,19 @@ import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
 import { peerSubscribe } from "./peer-subscribe";
 
-const peerHelperSymbol = Symbol("PeerHelper");
+const peerHelperSymbol = Symbol("peerHelperSymbol");
+
 export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
-  #pool: Pool;
-  #socket: SocketService;
+  _pool!: Pool;
+  _socket!: SocketService;
   [peerHelperSymbol]: MainPeerHelper;
 
   constructor() {
     super();
-    if (!MainPeerHelper[peerHelperSymbol]) {
-      MainPeerHelper[peerHelperSymbol] = this;
+    if (!(MainPeerHelper as any)[peerHelperSymbol]) {
+      (MainPeerHelper as any)[peerHelperSymbol] = this;
     }
-    return MainPeerHelper[peerHelperSymbol];
+    return (MainPeerHelper as any)[peerHelperSymbol];
   }
 
   static get instance() {
@@ -41,25 +42,25 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
 
   has(address: string) {
     if (!address) throw new Error("address connot be empty");
-    return this.#pool.has(address);
+    return this._pool.has(address);
   }
 
   getPeer(address: string) {
     if (!address) throw new Error("address connot be empty");
-    return this.#pool.get(address);
+    return this._pool.get(address);
   }
 
   get pool() {
-    return this.#pool;
+    return this._pool;
   }
 
   get address() {
-    return this.#pool!.address;
+    return this._pool!.address;
   }
 
   getPeerList() {
-    if (!this.#pool) return [];
-    return this.#pool.getAll(); //.filter(([_, peer]) => peer.connected);
+    if (!this._pool) return [];
+    return this._pool.getAll(); //.filter(([_, peer]) => peer.connected);
   }
 
   getServerPeerList() {
@@ -72,13 +73,13 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   }
 
   get socket() {
-    // if (!this.#socket) throw new Error("the main pipe must be connected");
-    return this.#socket;
+    // if (!this._socket) throw new Error("the main pipe must be connected");
+    return this._socket;
   }
 
   // get pool() {
-  //   if (!this.#pool) throw new Error("method waitingConnection needs to be executed first");
-  //   return this.#pool;
+  //   if (!this._pool) throw new Error("method waitingConnection needs to be executed first");
+  //   return this._pool;
   // }
 
   /**
@@ -86,27 +87,27 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
    */
   waitingConnection(address: string) {
     return new Promise<boolean>((resolve, reject) => {
-      this.#pool = new Pool(address);
+      this._pool = new Pool(address);
       /**
        * 信令服务 socket
        */
-      this.#socket = new SocketService();
-      this.#socket.connent().then(
+      this._socket = new SocketService();
+      this._socket.connent().then(
         () => {
           let uint = encodeMessage(MsgTypes.LOGIN, {
             address: address,
           });
-          this.#socket.wssSend(uint);
+          this._socket.wssSend(uint);
           resolve(true);
         },
         () => {
           reject(false);
         }
       );
-      this.#socket.onClose = () => {
+      this._socket.onClose = () => {
         reject(false);
       };
-      this.#socket.onMessage = ({ type, buffer, otherAddress }) => {
+      this._socket.onMessage = ({ type, buffer, otherAddress }) => {
         this.onSignal(type, buffer, otherAddress);
       };
     });
@@ -118,8 +119,9 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
    * bridgeAddress 桥接地址
    */
   launch(otheAddress: string, bridgeAddress?: string) {
-    if (this.address === otheAddress) throw new Error(`you can't connect to yourself`);
-    let peer = this.#pool.get(otheAddress);
+    if (this.address === otheAddress)
+      throw new Error(`you can't connect to yourself`);
+    let peer = this._pool.get(otheAddress);
     if (peer.connected) return peer;
     this.peerBindSendEvent(peer);
     peer.bridgeAddress = bridgeAddress;
@@ -143,7 +145,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
       this.signalSend(to, from, blocks, bridgeAddress);
     });
     peer.on("closed", () => {
-      this.#pool.remove(peer.to);
+      this._pool.remove(peer.to);
       this.emit("peerClosed", peer);
     });
     peer.on("connected", () => {
@@ -183,7 +185,12 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
    * 服务节点模式 使用 socket 传输
    * 本地节点模式 使用 rtc 传输
    */
-  private signalSend(to: string, from: string, blocks: IDataBlock[], bridgeAddress: string) {
+  private signalSend(
+    to: string,
+    from: string,
+    blocks: IDataBlock[],
+    bridgeAddress?: string
+  ) {
     if (bridgeAddress) {
       /**
        * 桥接数据转发 采用数据打包后发送 减少转发次数
@@ -205,19 +212,31 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   /**
    * 处理接收到的信令
    */
-  private onSignal(type: DataBlockType, buffer: ArrayBuffer, otherAddress: string, bridgeAddress?: string) {
-    let peer = this.#pool.get(otherAddress);
+  private onSignal(
+    type: DataBlockType,
+    buffer: ArrayBuffer,
+    otherAddress: string,
+    bridgeAddress?: string
+  ) {
+    let peer = this._pool.get(otherAddress);
     this.peerBindSendEvent(peer);
     switch (type) {
       case DataBlockType.OFFER:
         peer.bridgeAddress = bridgeAddress;
-        peer.offerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON(), otherAddress);
+        peer.offerHandler(
+          PeerDescription.decode(new Uint8Array(buffer)).toJSON(),
+          otherAddress
+        );
         break;
       case DataBlockType.ANSWER:
-        peer.answerHandler(PeerDescription.decode(new Uint8Array(buffer)).toJSON());
+        peer.answerHandler(
+          PeerDescription.decode(new Uint8Array(buffer)).toJSON()
+        );
         break;
       case DataBlockType.CANDIDATE:
-        peer.candidateHandler(PeerCandidate.decode(new Uint8Array(buffer)).toJSON());
+        peer.candidateHandler(
+          PeerCandidate.decode(new Uint8Array(buffer)).toJSON()
+        );
         break;
     }
   }
@@ -228,7 +247,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   // }
 
   send(otherAddress: string, data: ArrayBuffer) {
-    let peer = this.#pool.get(otherAddress);
+    let peer = this._pool.get(otherAddress);
     if (!peer!.connected) return;
     peer.channelSend(data);
   }
@@ -282,10 +301,17 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     }
     console.info("path:", msg.path);
     let otherAddress = msg.path[0]; // 数据发送者
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
-      console.info(`收到 ${msg.path[0]} => ${msg.path[msg.path.length - 1]} 类型 ${DataBlockType[type]}`);
-      this.onSignal(type, buffer, otherAddress, msg.from);
-    });
+    unpackForwardBlocks(
+      pickTypedArrayBuffer(msg.data),
+      ({ type, payload: buffer }) => {
+        console.info(
+          `收到 ${msg.path[0]} => ${msg.path[msg.path.length - 1]} 类型 ${
+            DataBlockType[type]
+          }`
+        );
+        this.onSignal(type, buffer, otherAddress, msg.from);
+      }
+    );
   }
 
   /**

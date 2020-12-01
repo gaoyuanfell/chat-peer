@@ -1,7 +1,9 @@
 import { Component, OnInit } from "@angular/core";
 import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
-import { PeerHelper } from "src/sdk";
+import { NavController } from "@ionic/angular";
+import { ChatResponseMessage } from "chat-peer-models";
+import { PeerHelper } from "chat-peer-sdk";
 import { UserService } from "src/services/user.service";
 
 @Component({
@@ -10,7 +12,7 @@ import { UserService } from "src/services/user.service";
   styleUrls: ["./login.page.scss"],
 })
 export class LoginPage implements OnInit {
-  constructor(private router: Router, private user: UserService, private title: Title) {
+  constructor(private router: Router, private user: UserService, private title: Title, private nav: NavController) {
     this.peerHelper = new PeerHelper();
   }
 
@@ -26,5 +28,17 @@ export class LoginPage implements OnInit {
     this.user.setCurrentAddress(this.address);
     this.peerHelper.create(this.address);
     this.router.navigate(["/chats"]);
+    // this.nav.navigateForward(["/chats"]);
+
+    let a = new ChatResponseMessage({
+      businessId: "1",
+    });
+
+    let arr = ChatResponseMessage.encode(a).finish();
+
+    console.info(arr);
+    console.info(arr.buffer);
+    console.info(arr.length);
+    console.info(arr.byteLength);
   }
 }

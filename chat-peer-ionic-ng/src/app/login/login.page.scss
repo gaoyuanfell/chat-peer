@@ -28,20 +28,19 @@ ion-item {
   position: absolute;
   bottom: 70px;
   right: 60px;
+  ion-button {
+    border-radius: 50%;
+    overflow: hidden;
+    width: 55px;
+    height: 55px;
+    --background: red;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --padding-end: 0;
+    --padding-start: 0;
+  }
 }
 
 ion-icon {
   font-size: 40px;
-}
-
-ion-button {
-  border-radius: 50%;
-  overflow: hidden;
-  width: 55px;
-  height: 55px;
-  --background: red;
-  --padding-top: 0;
-  --padding-bottom: 0;
-  --padding-end: 0;
-  --padding-start: 0;
 }

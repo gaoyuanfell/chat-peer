@@ -6,30 +6,34 @@ export class BusPool {
     this.address = address;
   }
 
-  #pool = new Map<string, Map<string, PeerBus>>();
+  private pool = new Map<string, Map<string, PeerBus>>();
 
   has(address: string, businessId: string) {
-    let bo = this.#pool.has(address);
+    let bo = this.pool.has(address);
     if (!bo) return false;
-    let pool = this.#pool.get(address);
+    let pool = this.pool.get(address);
+    if (!pool) return false;
     return pool.has(businessId);
   }
 
   get(otherAddress: string, businessId: string) {
-    let peers = this.#pool.get(otherAddress);
+    let peers = this.pool.get(otherAddress);
     if (!peers) peers = new Map();
-    if (peers.has(businessId)) return peers.get(businessId);
+    if (peers.has(businessId)) {
+      let p = peers.get(businessId);
+      if (p) return p;
+    }
     let peer = new PeerBus(this.address);
     peer.businessId = businessId;
     peers.set(businessId, peer);
-    this.#pool.set(otherAddress, peers);
+    this.pool.set(otherAddress, peers);
     return peer;
   }
 
   remove(otherAddress: string, businessId: string) {
-    if (this.#pool.has(otherAddress)) {
-      let _pool = this.#pool.get(otherAddress);
-      if (_pool.has(businessId)) {
+    if (this.pool.has(otherAddress)) {
+      let _pool = this.pool.get(otherAddress);
+      if (_pool && _pool.has(businessId)) {
         let peer = _pool.get(businessId);
         _pool.delete(businessId);
         if (peer && peer.connected) {
@@ -40,12 +44,12 @@ export class BusPool {
   }
 
   reset() {
-    for (const pool of this.#pool.values()) {
+    for (const pool of this.pool.values()) {
       for (const peer of pool.values()) {
         peer.close();
       }
       pool.clear();
     }
-    this.#pool.clear();
+    this.pool.clear();
   }
 }

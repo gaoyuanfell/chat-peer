@@ -24,3 +24,9 @@ export interface PeerServer {
   connent(...args: unknown[]): any;
   send(receiver: string, from: string, blocks: IDataBlock[]): any;
 }
+
+export interface PromiseOutType<T> {
+  promise: Promise<T>;
+  resolve: (data?: T) => void;
+  reject: (reason?: T) => void;
+}

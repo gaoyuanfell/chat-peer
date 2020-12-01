@@ -1,4 +1,8 @@
-import { DataBlockType, PeerCandidate, PeerDescription } from "chat-peer-models";
+import {
+  DataBlockType,
+  PeerCandidate,
+  PeerDescription,
+} from "chat-peer-models";
 import { EmitTypeMain } from "../subscribe";
 import { Peer } from "./peer";
 
@@ -7,7 +11,7 @@ export class PeerMain extends Peer<EmitTypeMain> {
     super(address);
   }
 
-  bridgeAddress: string; // 桥接地址
+  bridgeAddress?: string; // 桥接地址
 
   peerEvent() {
     // 当ICE收集状态（即ICE代理是否正在积极收集候选者）发生更改时
@@ -95,7 +99,7 @@ export class PeerMain extends Peer<EmitTypeMain> {
      */
     this.rtcPeer.ondatachannel = (event: RTCDataChannelEvent) => {
       this.emit("datachannel", event);
-      this.bridgeAddress = undefined;
+      this.bridgeAddress = "";
       let channel = event.channel;
       channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         this.emit("message", event);

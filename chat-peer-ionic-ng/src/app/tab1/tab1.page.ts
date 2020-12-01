@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { AlertController, ModalController } from "@ionic/angular";
-import { MainPeerHelper, BusPeerHelper, PeerMain, PeerHelper } from "src/sdk";
+import { MainPeerHelper, BusPeerHelper, PeerMain, PeerHelper } from "chat-peer-sdk";
 
 @Component({
   selector: "app-tab1",

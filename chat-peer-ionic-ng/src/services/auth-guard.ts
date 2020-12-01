@@ -12,15 +12,17 @@ import {
   RouterStateSnapshot,
 } from "@angular/router";
 import { Observable } from "rxjs";
-import { MainPeerHelper } from "src/sdk";
+import { MainPeerHelper } from "chat-peer-sdk";
+
+// , CanActivateChild, CanLoad, CanDeactivate<any>
 
 @Injectable({ providedIn: "root" })
-export class AuthGuard implements CanActivate, CanActivateChild, CanLoad, CanDeactivate<any> {
+export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private router: Router) {}
 
   canLoadFun() {
-    // let socket = MainPeerHelper.instance.socket;
-    // if (!socket) return this.router.navigate(["/login"]);
+    let socket = MainPeerHelper.instance.socket;
+    if (!socket) return this.router.navigate(["/login"]);
     return true;
   }
 

@@ -17,6 +17,8 @@
   padding: 0 10px;
   border-top: 1px solid #ccc;
   background: #f5f5f5;
+  position: fixed;
+  bottom: 0;
   ion-input {
     --background: #fff;
     border-radius: 3px;
@@ -27,19 +29,57 @@
   }
 }
 
+.input-box-b {
+  width: 100%;
+  min-height: 56px;
+}
+
 .bubble-item {
   display: flex;
-  margin: 10px 0;
+  padding: 10px 0;
+  align-items: flex-start;
 
   &.self {
     flex-direction: row-reverse;
     .content {
       background: rgba(147, 235, 105, 1);
+      &::before {
+        left: auto;
+        right: -13px;
+        border-color: transparent transparent transparent #93eb69;
+      }
+    }
+    .avatar {
+      margin-left: 14px;
     }
   }
   .content {
     max-width: 200px;
     padding: 10px;
+    background: #fff;
+    position: relative;
+    &::before {
+      content: "";
+      position: absolute;
+      left: -13px;
+      top: 13px;
+      width: 0;
+      height: 0;
+      border-color: transparent #fff transparent transparent;
+      border-style: solid;
+      border-width: 8px 7px;
+      box-sizing: border-box;
+    }
+  }
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    text-align: center;
+    line-height: 40px;
+    font-size: 34px;
+    margin-left: 8px;
     background: #fff;
   }
 }

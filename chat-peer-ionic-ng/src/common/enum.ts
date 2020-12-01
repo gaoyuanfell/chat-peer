@@ -3,6 +3,7 @@ export enum BusMessageType {
   CHAT_RESPONSE,
   VIDEO_REQUEST,
   VIDEO_RESPONSE,
+  VIDEO_HANGUP,
 }
 
 export enum DataBusBlockType {}

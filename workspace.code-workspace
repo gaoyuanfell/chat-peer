@@ -8,6 +8,9 @@
 	},
 	{
 		"path": "chat-peer-server"
+	},
+	{
+		"path": "chat-peer-sdk"
 	}
 ]
 }

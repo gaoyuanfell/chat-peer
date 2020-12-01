@@ -1,15 +1,19 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
-import { ViewDidLeave } from "@ionic/angular";
+import { ViewDidEnter, ViewDidLeave } from "@ionic/angular";
 import { Subject } from "rxjs";
-import { MainPeerHelper } from "src/sdk";
+import { MainPeerHelper } from "chat-peer-sdk";
 
 @Component({
   selector: "app-network",
   templateUrl: "./network.page.html",
   styleUrls: ["./network.page.scss"],
 })
-export class NetworkPage implements OnInit, ViewDidLeave {
+export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
   constructor(private cdrf: ChangeDetectorRef) {}
+
+  message: string;
+
+  ionViewDidEnter() {}
 
   addressList$ = new Subject<Array<string>>();
 

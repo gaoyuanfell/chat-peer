@@ -8,9 +8,9 @@ import {
   packForwardBlocks,
   pickTypedArrayBuffer,
   promiseOut,
-  promiseOutType,
   TransferMessage,
   unpackForwardBlocks,
+  PromiseOutType,
 } from "chat-peer-models";
 
 export class SocketService extends AbstractPeerServer {
@@ -18,11 +18,13 @@ export class SocketService extends AbstractPeerServer {
     super();
   }
 
-  wss: WebSocket;
+  wss: WebSocket | undefined;
   port: number = 1129;
   connent() {
     return new Promise<WebSocket>((resolve, reject) => {
-      let url = `${location.protocol === "http:" ? "ws://" : "wss://"}${location.hostname}:${this.port}`;
+      let url = `${location.protocol === "http:" ? "ws://" : "wss://"}${
+        location.hostname
+      }:${this.port}`;
       let wss = new WebSocket(url);
       wss.binaryType = "arraybuffer";
       wss.onopen = (e) => {
@@ -54,28 +56,32 @@ export class SocketService extends AbstractPeerServer {
     });
   }
 
-  #promiseMap = new Map<string, promiseOutType>();
+  private promiseMap = new Map();
 
   generatePromise<T>(businessId: string) {
     let p = promiseOut<T>();
-    this.#promiseMap.set(businessId, p);
+    this.promiseMap.set(businessId, p);
     return p.promise;
   }
 
   onServerPeerList(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.SERVICE_PEER_TABLE, dataArr);
-    let p = this.#promiseMap.get(msg.businessId);
+    let p = this.promiseMap.get(msg.businessId);
+    if (!p) return;
     p.resolve(msg.addressList);
-    this.#promiseMap.delete(msg.businessId);
+    this.promiseMap.delete(msg.businessId);
   }
 
   onTransfer(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.TRANSFER, dataArr);
-    unpackForwardBlocks(pickTypedArrayBuffer(msg.data), ({ type, payload: buffer }) => {
-      this.message({ type, buffer, otherAddress: msg.from });
-    });
+    unpackForwardBlocks(
+      pickTypedArrayBuffer(msg.data),
+      ({ type, payload: buffer }) => {
+        this.message({ type, buffer, otherAddress: msg.from });
+      }
+    );
   }
 
   send(receiver: string, from: string, blocks: IDataBlock[]) {
@@ -87,11 +93,20 @@ export class SocketService extends AbstractPeerServer {
     this.wssSend(sendData);
   }
 
-  onError: () => any;
-  onClose: () => any;
-  onMessage: (block: { type: DataBlockType; buffer: ArrayBuffer; otherAddress: string }) => any;
-  wssSend(data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView) {
-    if (this.wss && this.wss.readyState !== 1) throw new Error("socket server did not start");
-    this.wss.send(data);
+  onError!: () => any;
+  onClose!: () => any;
+  onMessage!: (block: {
+    type: DataBlockType;
+    buffer: ArrayBuffer;
+    otherAddress: string;
+  }) => any;
+  wssSend(
+    data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView
+  ) {
+    if (this.wss && this.wss.readyState === 1) {
+      this.wss.send(data);
+      return;
+    }
+    throw new Error("socket server did not start");
   }
 }

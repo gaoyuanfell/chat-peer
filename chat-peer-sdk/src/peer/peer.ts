@@ -2,10 +2,10 @@ import { Subscribe } from "../subscribe";
 
 export abstract class Peer<T> extends Subscribe<T> {
   rtcPeer: RTCPeerConnection;
-  channel: RTCDataChannel;
+  channel!: RTCDataChannel;
   from: string;
-  to: string;
-  hasBindEvent: boolean; // 是否监听过发送信令
+  to!: string;
+  hasBindEvent!: boolean; // 是否监听过发送信令
 
   get connected() {
     return this.rtcPeer.connectionState === "connected";
@@ -35,7 +35,7 @@ export abstract class Peer<T> extends Subscribe<T> {
     this.peerEvent();
   }
 
-  abstract peerEvent();
+  abstract peerEvent(): void;
 
   /**
    * p2p发送消息
@@ -50,12 +50,15 @@ export abstract class Peer<T> extends Subscribe<T> {
   /**
    * 创建连接
    */
-  abstract async launchPeer(address: string);
+  abstract launchPeer(address: string): Promise<void>;
 
   /**
    * 接收到 offer 后 下个执行步骤
    */
-  abstract async offerHandler(description: RTCSessionDescriptionInit, from: string);
+  abstract offerHandler(
+    description: RTCSessionDescriptionInit,
+    from: string
+  ): Promise<void>;
 
   /**
    * 接收到 answer 后 下个执行步骤
@@ -95,20 +98,20 @@ export abstract class Peer<T> extends Subscribe<T> {
   /**
    * 发送呼叫 信令
    */
-  abstract sendOffer();
+  abstract sendOffer(): void;
 
   /**
    * 发送回应信令
    */
-  abstract sendAnswer();
+  abstract sendAnswer(): void;
 
   /**
    * 发送候选者描述
    * @param candidate
    */
-  abstract sendCandidate(candidate: RTCIceCandidate);
+  abstract sendCandidate(candidate: RTCIceCandidate): void;
 
-  abstract close();
+  abstract close(): void;
 
   protected destroy() {
     this.clear();

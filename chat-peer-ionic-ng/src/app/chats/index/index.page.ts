@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
-import { ViewDidEnter, ViewWillEnter } from "@ionic/angular";
+import { ModalController, NavController, ViewDidEnter, ViewWillEnter } from "@ionic/angular";
 import { packForwardBlocks, unpackForwardBlocks, ChatResponseMessage } from "chat-peer-models";
 import { Subject } from "rxjs";
 import { BusMessageType } from "src/common/enum";
-import { BusPeerHelper, MainPeerHelper, PeerMain } from "src/sdk";
+import { BusPeerHelper, MainPeerHelper, PeerMain } from "chat-peer-sdk";
+import { VideoComponent } from "../video/video.component";
 
 @Component({
   selector: "app-index",
@@ -12,7 +13,12 @@ import { BusPeerHelper, MainPeerHelper, PeerMain } from "src/sdk";
   styleUrls: ["./index.page.scss"],
 })
 export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
-  constructor(private router: Router, private cdrf: ChangeDetectorRef) {}
+  constructor(
+    private router: Router,
+    private cdrf: ChangeDetectorRef,
+    private nav: NavController,
+    private modal: ModalController
+  ) {}
 
   ionViewDidEnter() {}
 
@@ -20,7 +26,17 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
     this.getPeerList();
   }
 
+  address: string;
+
   peerList$ = new Subject<[string, PeerMain][]>();
+
+  getPeerList() {
+    this.peerList$.next(MainPeerHelper.instance.getPeerList());
+  }
+
+  goNetwork() {
+    this.router.navigate(["/chats/network"]);
+  }
 
   ngOnInit() {
     MainPeerHelper.instance.on("peerConnected", () => {
@@ -35,7 +51,7 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
 
     BusPeerHelper.instance.on("mainMessage", ({ otherAddress, buffer }) => {
       unpackForwardBlocks(buffer, ({ type, payload }) => {
-        console.info(otherAddress, type, payload);
+        console.info(otherAddress, type, payload, BusMessageType[type]);
         switch (type) {
           case BusMessageType.CHAT_REQUEST:
             this.chatRequest(otherAddress, payload);
@@ -43,6 +59,11 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
           case BusMessageType.CHAT_RESPONSE:
             this.chatResponse(otherAddress, payload);
             break;
+          case BusMessageType.VIDEO_REQUEST:
+            this.chatVideoRequest(otherAddress, payload);
+            break;
+          case BusMessageType.VIDEO_RESPONSE:
+            this.chatVideResponse(otherAddress, payload);
         }
       });
     });
@@ -54,6 +75,7 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
       businessId: businessId,
       agree: true,
     });
+
     await this.router.navigate(["/chats/chat"], {
       queryParams: { otherAddress: otherAddress, businessId: businessId },
     });
@@ -77,16 +99,74 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
     BusPeerHelper.instance.offer(otherAddress, msg.businessId);
   }
 
-  getPeerList() {
-    this.peerList$.next(MainPeerHelper.instance.getPeerList());
-  }
-
-  goNetwork() {
-    this.router.navigate(["/chats/network"]);
-  }
-
   chat(peer: PeerMain) {
     let arr = packForwardBlocks([{ type: BusMessageType.CHAT_REQUEST, payload: new Uint8Array().buffer }]);
+    BusPeerHelper.instance.send(peer.to, arr.buffer);
+  }
+
+  // 视频处理
+  chatVideoRequest(otherAddress: string, payload: ArrayBuffer) {
+    let businessId = Date.now().toString();
+
+    let model = new ChatResponseMessage({
+      businessId: businessId,
+      agree: true,
+    });
+
+    const start = async () => {
+      let mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      let videoCom = await this.modal.create({
+        component: VideoComponent,
+        componentProps: {
+          stream: mediaStream,
+          otherAddress,
+          businessId,
+        },
+      });
+
+      await videoCom.present();
+
+      let uinArr = ChatResponseMessage.encode(model).finish();
+      let uin = new Uint8Array(uinArr.length);
+      uin.set(uinArr);
+
+      let arr = packForwardBlocks([
+        { type: BusMessageType.VIDEO_RESPONSE, payload: uin.buffer }, // ChatResponseMessage.encode(model).finish().buffer
+      ]);
+      BusPeerHelper.instance.send(otherAddress, arr);
+    };
+
+    start();
+  }
+
+  chatVideResponse(otherAddress: string, payload: ArrayBuffer) {
+    let msg = ChatResponseMessage.decode(new Uint8Array(payload));
+    const start = async () => {
+      let mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      let videoCom = await this.modal.create({
+        component: VideoComponent,
+        componentProps: {
+          stream: mediaStream,
+          otherAddress,
+          businessId: msg.businessId,
+        },
+      });
+      await videoCom.present();
+      console.info("BusPeerHelper.instance.offer(otherAddress, msg.businessId);");
+      BusPeerHelper.instance.offer(otherAddress, msg.businessId);
+    };
+
+    start();
+  }
+
+  chatVideo(peer: PeerMain) {
+    let arr = packForwardBlocks([{ type: BusMessageType.VIDEO_REQUEST, payload: new Uint8Array().buffer }]);
     BusPeerHelper.instance.send(peer.to, arr.buffer);
   }
 }

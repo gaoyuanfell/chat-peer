@@ -1,0 +1,9 @@
+{
+  "packages": [
+    "chat-peer-server",
+    "chat-peer-models",
+    "chat-peer-ionic-ng",
+    "chat-peer-sdk"
+  ],
+  "version": "0.0.0"
+}

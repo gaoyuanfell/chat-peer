@@ -2,15 +2,24 @@ import { IDataBlockTransport } from "chat-peer-models";
 import { PeerMain } from "../peer";
 
 export interface ISubscribe<Q> {
-  emit<T extends keyof Q>(type: T, data?: Q[T]);
+  emit<T extends keyof Q>(type: T, data?: Q[T]): void;
 
-  on<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
+  on<T extends keyof Q>(
+    type: T,
+    listener: (this: ISubscribe<Q>, ev: Q[T]) => any
+  ): void;
 
-  once<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
+  once<T extends keyof Q>(
+    type: T,
+    listener: (this: ISubscribe<Q>, ev: Q[T]) => any
+  ): void;
 
-  delete<T extends keyof Q>(type: T, listener: (this: ISubscribe<Q>, ev: Q[T]) => any);
+  delete<T extends keyof Q>(
+    type: T,
+    listener: (this: ISubscribe<Q>, ev: Q[T]) => any
+  ): void;
 
-  clear();
+  clear(): void;
 }
 
 export interface EmitTypeBaseMap {
@@ -19,7 +28,7 @@ export interface EmitTypeBaseMap {
   disconnected: Event;
   failed: Event;
   new: Event;
-  closed: any;
+  closed: Event;
   icegatheringstatechange: RTCIceGatheringState;
   signalingstatechange: RTCSignalingState;
   iceconnectionstatechange: RTCIceConnectionState;
@@ -48,8 +57,12 @@ export interface EmitTypeBusMap extends EmitTypeBaseMap {
 export interface EmitTypeBusHelperMap {
   track: RTCTrackEvent;
   message: MessageEvent<ArrayBuffer>;
-  closed: any;
-  offer: { next: (constraints?: MediaStreamConstraints) => any; otherAddress: string; businessId: string };
+  closed: Event;
+  offer: {
+    next: (constraints?: MediaStreamConstraints) => any;
+    otherAddress: string;
+    businessId: string;
+  };
   mainMessage: {
     buffer: ArrayBuffer;
     otherAddress: string;
@@ -61,10 +74,14 @@ export interface EmitTypeMainHelperMap {
   peerClosed: PeerMain;
 }
 
-export type EmitTypeMain = Partial<EmitTypeMainMap>;
+type Partials<T> = {
+  [P in keyof T]: T[P];
+};
 
-export type EmitTypeBus = Partial<EmitTypeBusMap>;
+export type EmitTypeMain = Partials<EmitTypeMainMap>;
 
-export type EmitTypeBusHelper = Partial<EmitTypeBusHelperMap>;
+export type EmitTypeBus = Partials<EmitTypeBusMap>;
 
-export type EmitTypeMainHelper = Partial<EmitTypeMainHelperMap>;
+export type EmitTypeBusHelper = Partials<EmitTypeBusHelperMap>;
+
+export type EmitTypeMainHelper = Partials<EmitTypeMainHelperMap>;

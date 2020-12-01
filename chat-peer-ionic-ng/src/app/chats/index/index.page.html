@@ -10,11 +10,16 @@
 </ion-header>
 
 <ion-content>
+  <p>{{address}}</p>
+  <ion-input [value]="address" [placeholder]="'请输入你的昵称'" [(ngModel)]="address"></ion-input>
+  <ion-button (click)=" address = '' ">send</ion-button>
+
   <ion-list>
     <ion-virtual-scroll [items]="peerList$ | async">
       <ion-item *virtualItem="let item">
         <ion-label>{{item[0]}}</ion-label>
         <ion-button (click)="chat(item[1])">聊天</ion-button>
+        <ion-button (click)="chatVideo(item[1])">视频</ion-button>
       </ion-item>
     </ion-virtual-scroll>
   </ion-list>

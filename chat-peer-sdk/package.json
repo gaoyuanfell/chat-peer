@@ -1,0 +1,16 @@
+{
+  "name": "chat-peer-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "dev": "tsc --build -w",
+    "build": "tsc --build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chat-peer-models": "^1.0.0"
+  }
+}

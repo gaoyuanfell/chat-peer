@@ -1,0 +1,10 @@
+<div class="content">
+  <video autoplay class="video-others" [srcObject]="otherStream"></video>
+  <video autoplay muted class="video-my" [srcObject]="stream"></video>
+
+  <div class="video-hangup">
+    <ion-button (click)="hangup()">
+      <ion-icon name="call"></ion-icon>
+    </ion-button>
+  </div>
+</div>

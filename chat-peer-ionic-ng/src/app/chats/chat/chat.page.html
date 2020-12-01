@@ -9,20 +9,35 @@
   </ion-toolbar>
 </ion-header>
 
+<div>
+  <input [(ngModel)]="messages" type="text" />
+  <p>{{messages}}</p>
+</div>
+
 <ion-content>
   <div class="message-box">
     <div class="message-bubble">
-      <ion-virtual-scroll [items]="messageList">
+      <div class="bubble-item" [class.self]="item.self" *ngFor="let item of messageList">
+        <ion-avatar>
+          <!-- <div class="avatar">{{item.self ? peer?.from![0] : peer?.to![0]}}</div> -->
+        </ion-avatar>
+        <div class="content">{{item.content}}</div>
+      </div>
+      <!-- <ion-virtual-scroll [items]="messageList$ | async">
         <div class="bubble-item" *virtualItem="let item" [class.self]="item.self">
-          <ion-avatar></ion-avatar>
+          <ion-avatar>
+            <div class="avatar">{{'B'}}</div>
+          </ion-avatar>
           <div class="content">{{item.content}}</div>
         </div>
-      </ion-virtual-scroll>
+      </ion-virtual-scroll> -->
     </div>
-
     <div class="input-box">
-      <ion-input [(ngModel)]="message"> </ion-input>
-      <ion-button>发送</ion-button>
+      <input [(ngModel)]="messages" type="text" />
+      <!-- <ion-input type="text" [value]="messages" (input)=" messages = $event.value "> </ion-input> -->
+      <ion-button (click)=" messages = '' ">send</ion-button>
+      <ion-button (click)="send()">发送</ion-button>
     </div>
+    <div class="input-box-b"></div>
   </div>
 </ion-content>
