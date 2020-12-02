@@ -14,8 +14,6 @@ import {
 import { Observable } from "rxjs";
 import { MainPeerHelper } from "chat-peer-sdk";
 
-// , CanActivateChild, CanLoad, CanDeactivate<any>
-
 @Injectable({ providedIn: "root" })
 export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private router: Router) {}

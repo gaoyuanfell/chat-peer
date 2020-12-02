@@ -26,8 +26,6 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
     this.getPeerList();
   }
 
-  address: string;
-
   peerList$ = new Subject<[string, PeerMain][]>();
 
   getPeerList() {
@@ -54,12 +52,14 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
         console.info(otherAddress, type, payload, BusMessageType[type]);
         switch (type) {
           case BusMessageType.CHAT_REQUEST:
+            // 可以添加请求确认逻辑
             this.chatRequest(otherAddress, payload);
             break;
           case BusMessageType.CHAT_RESPONSE:
             this.chatResponse(otherAddress, payload);
             break;
           case BusMessageType.VIDEO_REQUEST:
+            // 可以添加请求确认逻辑
             this.chatVideoRequest(otherAddress, payload);
             break;
           case BusMessageType.VIDEO_RESPONSE:
@@ -80,12 +80,11 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
       queryParams: { otherAddress: otherAddress, businessId: businessId },
     });
 
-    let uinArr = ChatResponseMessage.encode(model).finish();
-    let uin = new Uint8Array(uinArr.length);
-    uin.set(uinArr);
-
     let arr = packForwardBlocks([
-      { type: BusMessageType.CHAT_RESPONSE, payload: uin.buffer }, // ChatResponseMessage.encode(model).finish().buffer
+      {
+        type: BusMessageType.CHAT_RESPONSE,
+        payload: new Uint8Array(ChatResponseMessage.encode(model).finish()).buffer,
+      },
     ]);
     BusPeerHelper.instance.send(otherAddress, arr);
   }
@@ -126,19 +125,16 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
           businessId,
         },
       });
-
       await videoCom.present();
 
-      let uinArr = ChatResponseMessage.encode(model).finish();
-      let uin = new Uint8Array(uinArr.length);
-      uin.set(uinArr);
-
       let arr = packForwardBlocks([
-        { type: BusMessageType.VIDEO_RESPONSE, payload: uin.buffer }, // ChatResponseMessage.encode(model).finish().buffer
+        {
+          type: BusMessageType.VIDEO_RESPONSE,
+          payload: new Uint8Array(ChatResponseMessage.encode(model).finish()).buffer,
+        },
       ]);
       BusPeerHelper.instance.send(otherAddress, arr);
     };
-
     start();
   }
 
@@ -161,12 +157,15 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
       console.info("BusPeerHelper.instance.offer(otherAddress, msg.businessId);");
       BusPeerHelper.instance.offer(otherAddress, msg.businessId);
     };
-
     start();
   }
 
   chatVideo(peer: PeerMain) {
     let arr = packForwardBlocks([{ type: BusMessageType.VIDEO_REQUEST, payload: new Uint8Array().buffer }]);
     BusPeerHelper.instance.send(peer.to, arr.buffer);
+  }
+
+  scanAddressList() {
+    MainPeerHelper.instance.scanAddressList();
   }
 }

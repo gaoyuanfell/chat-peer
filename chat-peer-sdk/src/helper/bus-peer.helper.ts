@@ -2,7 +2,6 @@ import {
   DataBlockType,
   decodeMessage,
   encodeMessage,
-  IDataBlock,
   MsgTypes,
   PeerCandidate,
   PeerDescription,
@@ -14,7 +13,6 @@ import { PeerBus } from "../peer";
 import { BusPool } from "../pool";
 import { EmitTypeBusHelper, Subscribe } from "../subscribe";
 import { MainPeerHelper } from "./main-peer.helper";
-import { peerSubscribe } from "./peer-subscribe";
 
 const busPeerHelperSymbol = Symbol("BusPeerHelper");
 export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
@@ -45,13 +43,13 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   createPool(address: string) {
     this._pool = new BusPool(address);
 
-    peerSubscribe.on("onMainBusiness", (buffer: ArrayBuffer) => {
-      this.onMainBusiness(buffer);
-    });
+    // peerSubscribe.on("onMainBusiness", (buffer: ArrayBuffer) => {
+    //   this.onMainBusiness(buffer);
+    // });
 
-    peerSubscribe.on("onMainBusinessBefore", (buffer: ArrayBuffer) => {
-      this.onMainBusinessBefore(buffer);
-    });
+    // peerSubscribe.on("onMainBusinessBefore", (buffer: ArrayBuffer) => {
+    //   this.onMainBusinessBefore(buffer);
+    // });
   }
 
   // 主通道消息
@@ -167,7 +165,6 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     });
     peer.on("message", (event) => {
       this.emit("message", event);
-      console.info(event.data);
     });
     peer.on("closed", () => {
       this._pool.remove(peer.to, peer.businessId);

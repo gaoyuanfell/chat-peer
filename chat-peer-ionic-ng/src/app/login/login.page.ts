@@ -2,7 +2,6 @@ import { Component, OnInit } from "@angular/core";
 import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { NavController } from "@ionic/angular";
-import { ChatResponseMessage } from "chat-peer-models";
 import { PeerHelper } from "chat-peer-sdk";
 import { UserService } from "src/services/user.service";
 
@@ -18,27 +17,20 @@ export class LoginPage implements OnInit {
 
   peerHelper: PeerHelper;
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.login();
+  }
 
   address: string;
 
   login() {
-    let t = this.title.getTitle();
-    this.title.setTitle(`${t} | ${this.address}`);
+    // let t = this.title.getTitle();
+    this.address = Math.floor(Math.random() * 1000000).toString();
+    console.info(this.address);
+    this.title.setTitle(`${this.address}`);
     this.user.setCurrentAddress(this.address);
     this.peerHelper.create(this.address);
     this.router.navigate(["/chats"]);
     // this.nav.navigateForward(["/chats"]);
-
-    let a = new ChatResponseMessage({
-      businessId: "1",
-    });
-
-    let arr = ChatResponseMessage.encode(a).finish();
-
-    console.info(arr);
-    console.info(arr.buffer);
-    console.info(arr.length);
-    console.info(arr.byteLength);
   }
 }

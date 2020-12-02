@@ -123,7 +123,9 @@ export class PeerBus extends Peer<EmitTypeBus> {
 
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
-    await this.rtcPeer.setRemoteDescription(description);
+    await this.rtcPeer.setRemoteDescription(
+      new RTCSessionDescription(description)
+    );
     await this.createAnswer();
     this.sendAnswer();
   }
@@ -142,10 +144,12 @@ export class PeerBus extends Peer<EmitTypeBus> {
       receiver: this.to,
       from: this.from,
       businessId: this.businessId,
-      data: packForwardBlocks([{ type: DataBlockType.OFFER, payload: uintArr }]),
+      data: packForwardBlocks([
+        { type: DataBlockType.OFFER, payload: uintArr },
+      ]),
     });
     this.emit("sendOffer", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendOffer 发送呼叫`, offer);
+    console.info(`${this.from} => ${this.to} sendOffer 发送呼叫`, offer);
   }
 
   sendAnswer() {
@@ -162,10 +166,12 @@ export class PeerBus extends Peer<EmitTypeBus> {
       receiver: this.to,
       from: this.from,
       businessId: this.businessId,
-      data: packForwardBlocks([{ type: DataBlockType.ANSWER, payload: uintArr }]),
+      data: packForwardBlocks([
+        { type: DataBlockType.ANSWER, payload: uintArr },
+      ]),
     });
     this.emit("sendAnswer", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendAnswer 发送回应`, answer);
+    console.info(`${this.from} => ${this.to} sendAnswer 发送回应`, answer);
   }
 
   sendCandidate(candidate: RTCIceCandidate) {
@@ -180,10 +186,15 @@ export class PeerBus extends Peer<EmitTypeBus> {
       receiver: this.to,
       from: this.from,
       businessId: this.businessId,
-      data: packForwardBlocks([{ type: DataBlockType.CANDIDATE, payload: uintArr }]),
+      data: packForwardBlocks([
+        { type: DataBlockType.CANDIDATE, payload: uintArr },
+      ]),
     });
     this.emit("sendCandidate", encodeMessage(MsgTypes.BUSINESS, model));
-    console.info(`sendCandidate 发送描述`, candidate);
+    console.info(
+      `${this.from} => ${this.to} sendCandidate 发送描述`,
+      candidate
+    );
   }
 
   addTrack(stream: MediaStream) {

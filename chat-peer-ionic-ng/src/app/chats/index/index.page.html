@@ -2,6 +2,7 @@
   <ion-toolbar>
     <ion-title>会话</ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="scanAddressList()"> 扫 </ion-button>
       <ion-button (click)="goNetwork()">
         <ion-icon name="globe-outline"></ion-icon>
       </ion-button>
@@ -10,10 +11,6 @@
 </ion-header>
 
 <ion-content>
-  <p>{{address}}</p>
-  <ion-input [value]="address" [placeholder]="'请输入你的昵称'" [(ngModel)]="address"></ion-input>
-  <ion-button (click)=" address = '' ">send</ion-button>
-
   <ion-list>
     <ion-virtual-scroll [items]="peerList$ | async">
       <ion-item *virtualItem="let item">

@@ -19,7 +19,6 @@ import { SocketService } from "../socket";
 import { PeerMain } from "../peer";
 import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
-import { peerSubscribe } from "./peer-subscribe";
 
 const peerHelperSymbol = Symbol("peerHelperSymbol");
 
@@ -130,6 +129,16 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   }
 
   /**
+   * 由于某些未知错误暂时不知怎么解决，加个节点重连
+   * Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to set remote offer sdp: Failed to apply the description for 0: Failed to setup RTCP mux.
+   * @param otheAddress
+   */
+  reslaunch(otheAddress: string) {
+    this._pool.remove(otheAddress);
+    return this.launch(otheAddress);
+  }
+
+  /**
    * 注册对应的逻辑处理事件
    */
   private peerBindSendEvent(peer: PeerMain) {
@@ -155,7 +164,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
       /**
        * 节点扫描
        */
-      this.scanAddressList();
+      // this.scanAddressList();
     });
     peer.on("message", (e) => {
       const data = e.data;
@@ -169,15 +178,36 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
           this.onBridge(data);
           break;
         case MsgTypes.BUSINESS:
-          peerSubscribe.emit("onMainBusiness", data);
-          // BusPeerHelper.instance.onMainBusiness(data);
+          this._onMainBusiness && this._onMainBusiness(data);
           break;
         case MsgTypes.BUSINESS_BEFORE:
-          peerSubscribe.emit("onMainBusinessBefore", data);
-          // BusPeerHelper.instance.onMainBusinessBefore(data);
+          this._onMainBusinessBefore && this._onMainBusinessBefore(data);
           break;
       }
     });
+  }
+
+  _onMainBusiness!: (this: MainPeerHelper, buffer: ArrayBuffer) => void;
+  _onMainBusinessBefore!: (this: MainPeerHelper, buffer: ArrayBuffer) => void;
+
+  /**
+   * 注册主通道接收函数
+   * @param fn
+   */
+  registerMainBusiness(
+    fn: (this: MainPeerHelper, buffer: ArrayBuffer) => void
+  ) {
+    this._onMainBusiness = fn;
+  }
+
+  /**
+   * 注册用户通道接收函数
+   * @param fn
+   */
+  registerMainBusinessBefore(
+    fn: (this: MainPeerHelper, buffer: ArrayBuffer) => void
+  ) {
+    this._onMainBusinessBefore = fn;
   }
 
   /**
@@ -240,11 +270,6 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
         break;
     }
   }
-
-  // create(address: string) {
-  //   BusPeerHelper.instance.createPool(address);
-  //   return this.waitingConnection(address);
-  // }
 
   send(otherAddress: string, data: ArrayBuffer) {
     let peer = this._pool.get(otherAddress);
@@ -319,7 +344,9 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
    */
   scanAddressList() {
     console.info("开始扫描了");
-    let list = this.getPeerList().map(([key]) => key);
+    let list = this.getPeerList()
+      .filter(([_, peer]) => peer.connected)
+      .map(([key]) => key);
     for (let index = 0; index < list.length; index++) {
       const addr = list[index];
       let model = new AddressTableMessage({
@@ -336,7 +363,9 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
    * 发送自己的地址表
    */
   private addressTableRequest(msg: AddressTableMessage) {
-    let list = this.getPeerList().map(([key]) => key);
+    let list = this.getPeerList()
+      .filter(([_, peer]) => peer.connected)
+      .map(([key]) => key);
     let model = new AddressTableMessage({
       addressList: list,
       type: AddressTableTypeMessage.RESPONSE,

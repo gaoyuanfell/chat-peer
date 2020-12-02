@@ -14,72 +14,7 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
 
   listeners = [];
 
-  messageList = [
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-    {
-      self: true,
-      content: "123123",
-    },
-    {
-      self: false,
-      content: "123123123123",
-    },
-  ];
+  messageList = [];
   // messageList$ = new Subject();
 
   messages: string;
@@ -128,8 +63,14 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
     );
   }
 
-  ionViewDidLeave() {
+  hangup() {}
+
+  destroy() {
     this.listeners.forEach((fn) => fn());
     this.peer.close();
+  }
+
+  ionViewDidLeave() {
+    this.destroy();
   }
 }

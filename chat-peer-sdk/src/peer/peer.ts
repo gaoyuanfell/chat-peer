@@ -15,22 +15,21 @@ export abstract class Peer<T> extends Subscribe<T> {
     super();
     this.from = address;
     this.rtcPeer = new RTCPeerConnection({
-      iceServers: [
-        // {
-        //   urls: [
-        //     "stun:stun1.l.google.com:19302",
-        //     "stun:stun2.l.google.com:19302",
-        //     "stun:stun3.l.google.com:19302",
-        //     "stun:stun4.l.google.com:19302",
-        //     "stun:s331835e69.zicp.vip:8865",
-        //   ],
-        // },
-        {
-          urls: "turn:s331835e69.zicp.vip:8865",
-          username: "test",
-          credential: "test123456789",
-        },
-      ],
+      // iceServers: [
+      //   // {
+      //   //   urls: [
+      //   //     "stun:stun1.l.google.com:19302",
+      //   //     "stun:stun2.l.google.com:19302",
+      //   //     "stun:stun3.l.google.com:19302",
+      //   //     "stun:stun4.l.google.com:19302",
+      //   //   ],
+      //   // },
+      //   // {
+      //   //   urls: "turn:s331835e69.zicp.vip:8865",
+      //   //   username: "test",
+      //   //   credential: "test123456789",
+      //   // },
+      // ],
     });
     this.peerEvent();
   }
@@ -44,7 +43,9 @@ export abstract class Peer<T> extends Subscribe<T> {
   channelSend(data: any) {
     if (this.channel && this.channel.readyState === "open") {
       this.channel.send(data);
+      return true;
     }
+    return false;
   }
 
   /**
@@ -64,7 +65,9 @@ export abstract class Peer<T> extends Subscribe<T> {
    * 接收到 answer 后 下个执行步骤
    */
   async answerHandler(description: RTCSessionDescriptionInit) {
-    await this.rtcPeer.setRemoteDescription(description);
+    await this.rtcPeer.setRemoteDescription(
+      new RTCSessionDescription(description)
+    );
   }
 
   /**
@@ -80,7 +83,10 @@ export abstract class Peer<T> extends Subscribe<T> {
    */
   protected async createOffer() {
     let option: RTCOfferOptions = {};
-    if (this.rtcPeer.iceConnectionState !== "connected") {
+    if (
+      this.rtcPeer.iceConnectionState !== "connected" &&
+      this.rtcPeer.iceConnectionState !== "completed"
+    ) {
       option.iceRestart = true;
     }
     let offer = await this.rtcPeer.createOffer(option);

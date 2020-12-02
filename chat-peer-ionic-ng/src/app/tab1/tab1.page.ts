@@ -1,5 +1,5 @@
 import { Component } from "@angular/core";
-import { AlertController, ModalController } from "@ionic/angular";
+import { AlertController } from "@ionic/angular";
 import { MainPeerHelper, BusPeerHelper, PeerMain, PeerHelper } from "chat-peer-sdk";
 
 @Component({

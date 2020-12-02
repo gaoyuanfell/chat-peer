@@ -98,6 +98,11 @@ export class PeerMain extends Peer<EmitTypeMain> {
      * 被动接收消息
      */
     this.rtcPeer.ondatachannel = (event: RTCDataChannelEvent) => {
+      /**
+       * 消息通道连接成功
+       * 发送心跳监测，如果
+       */
+
       this.emit("datachannel", event);
       this.bridgeAddress = "";
       let channel = event.channel;
@@ -107,9 +112,29 @@ export class PeerMain extends Peer<EmitTypeMain> {
     };
 
     this.channel = this.rtcPeer.createDataChannel(this.from);
+    this.channel.binaryType = "arraybuffer";
     this.channel.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       this.emit("message", event);
     };
+    this.channel.onclose = () => {
+      console.info("channel closed");
+      this.close();
+    };
+  }
+
+  /**
+   * // TODO 关键是什么时候启动该服务
+   * 心跳服務
+   */
+  private heartping() {
+    let count = 0;
+    let time = setTimeout(() => {
+      if (count > 2) {
+        this.close();
+      }
+      let b = new ArrayBuffer(1);
+      if (!this.channelSend(b)) count++;
+    }, 3000);
   }
 
   async launchPeer(address: string) {
@@ -120,7 +145,9 @@ export class PeerMain extends Peer<EmitTypeMain> {
 
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
-    await this.rtcPeer.setRemoteDescription(description);
+    await this.rtcPeer.setRemoteDescription(
+      new RTCSessionDescription(description)
+    );
     await this.createAnswer();
     this.sendAnswer();
   }
@@ -141,7 +168,7 @@ export class PeerMain extends Peer<EmitTypeMain> {
       blocks: [{ type: DataBlockType.OFFER, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
-    console.info(`sendOffer 发送呼叫`, offer);
+    console.info(`${this.from} => ${this.to} sendOffer 发送呼叫`, offer);
   }
 
   sendAnswer() {
@@ -160,7 +187,7 @@ export class PeerMain extends Peer<EmitTypeMain> {
       blocks: [{ type: DataBlockType.ANSWER, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
-    console.info(`sendAnswer 发送回应`, answer);
+    console.info(`${this.from} => ${this.to} sendAnswer 发送回应`, answer);
   }
 
   sendCandidate(candidate: RTCIceCandidate) {
@@ -177,7 +204,10 @@ export class PeerMain extends Peer<EmitTypeMain> {
       blocks: [{ type: DataBlockType.CANDIDATE, payload: uintArr }],
       bridgeAddress: this.bridgeAddress,
     });
-    console.info(`sendCandidate 发送描述`, candidate);
+    console.info(
+      `${this.from} => ${this.to} sendCandidate 发送描述`,
+      candidate
+    );
   }
 
   close() {
