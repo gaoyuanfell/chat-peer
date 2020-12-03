@@ -1,8 +1,10 @@
 import { Component } from "@angular/core";
 
 import { Platform } from "@ionic/angular";
-import { SplashScreen } from "@ionic-native/splash-screen/ngx";
-import { StatusBar } from "@ionic-native/status-bar/ngx";
+import { unpackForwardBlocks } from "chat-peer-models";
+import { BusPeerHelper } from "chat-peer-sdk";
+import { mainPeer$ } from "src/common/subscribes";
+import { ChatService } from "src/services/chat.service";
 
 @Component({
   selector: "app-root",
@@ -10,9 +12,10 @@ import { StatusBar } from "@ionic-native/status-bar/ngx";
   styleUrls: ["app.component.scss"],
 })
 export class AppComponent {
-  constructor(private platform: Platform) // private splashScreen: SplashScreen,
-  // private statusBar: StatusBar
-  {
+  constructor(
+    private chat: ChatService,
+    private platform: Platform // private splashScreen: SplashScreen, // private statusBar: StatusBar
+  ) {
     this.initializeApp();
   }
 
@@ -21,5 +24,22 @@ export class AppComponent {
     //   this.statusBar.styleDefault();
     //   this.splashScreen.hide();
     // });
+
+    this.chat.init();
+
+    this.mainEvent();
+  }
+
+  mainEvent() {
+    BusPeerHelper.instance.on("mainMessage", ({ otherAddress, buffer }) => {
+      console.info(otherAddress);
+      unpackForwardBlocks(buffer, ({ type, payload }) => {
+        mainPeer$.next({
+          type,
+          payload,
+          otherAddress,
+        });
+      });
+    });
   }
 }

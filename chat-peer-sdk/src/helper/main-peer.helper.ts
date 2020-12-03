@@ -248,10 +248,14 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     otherAddress: string,
     bridgeAddress?: string
   ) {
-    let peer = this._pool.get(otherAddress);
-    this.peerBindSendEvent(peer);
+    let peer;
     switch (type) {
       case DataBlockType.OFFER:
+        if (this._pool.has(otherAddress)) {
+          this._pool.remove(otherAddress);
+        }
+        peer = this._pool.get(otherAddress);
+        this.peerBindSendEvent(peer);
         peer.bridgeAddress = bridgeAddress;
         peer.offerHandler(
           PeerDescription.decode(new Uint8Array(buffer)).toJSON(),
@@ -259,11 +263,15 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
         );
         break;
       case DataBlockType.ANSWER:
+        peer = this._pool.get(otherAddress);
+        this.peerBindSendEvent(peer);
         peer.answerHandler(
           PeerDescription.decode(new Uint8Array(buffer)).toJSON()
         );
         break;
       case DataBlockType.CANDIDATE:
+        peer = this._pool.get(otherAddress);
+        this.peerBindSendEvent(peer);
         peer.candidateHandler(
           PeerCandidate.decode(new Uint8Array(buffer)).toJSON()
         );

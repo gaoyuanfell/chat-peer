@@ -42,14 +42,6 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
 
   createPool(address: string) {
     this._pool = new BusPool(address);
-
-    // peerSubscribe.on("onMainBusiness", (buffer: ArrayBuffer) => {
-    //   this.onMainBusiness(buffer);
-    // });
-
-    // peerSubscribe.on("onMainBusinessBefore", (buffer: ArrayBuffer) => {
-    //   this.onMainBusinessBefore(buffer);
-    // });
   }
 
   // 主通道消息

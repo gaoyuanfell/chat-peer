@@ -154,8 +154,8 @@ export const arrayDiff = <T>(current: Array<T>, diff: Array<T>) => {
 };
 
 export function promiseOut<T>() {
-  let resolve;
-  let reject;
+  let resolve = (data: T) => {};
+  let reject = (error?: any) => {};
   let promise = new Promise<T>((r, j) => {
     resolve = r;
     reject = j;

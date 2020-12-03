@@ -6,6 +6,12 @@
       </ion-button>
     </ion-buttons>
     <ion-title>网络列表</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="scanAddressList()">
+        <ion-icon name="radio-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -14,7 +20,9 @@
     <ion-virtual-scroll [items]="addressList$ | async">
       <ion-item *virtualItem="let item">
         <ion-label>节点地址： {{item}}</ion-label>
+        <ion-button *ngIf="status(item)" (click)="lunchChat(item)">发起聊天</ion-button>
         <ion-button *ngIf="!status(item)" (click)="connect(item)">连接</ion-button>
+        <ion-button *ngIf="hasKey(item)" (click)="resconnect(item)">重新连接</ion-button>
       </ion-item>
     </ion-virtual-scroll>
   </ion-list>

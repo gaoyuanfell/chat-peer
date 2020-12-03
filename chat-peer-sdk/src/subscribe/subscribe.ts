@@ -7,7 +7,7 @@ export class Subscribe<Q> implements ISubscribe<Q> {
     let fnArr = this.map.get(type);
     if (fnArr) {
       fnArr.forEach((fn) => {
-        fn(data as any);
+        fn.bind(this)(data as any);
       });
     }
   }
@@ -18,7 +18,7 @@ export class Subscribe<Q> implements ISubscribe<Q> {
   ) {
     let fnArr = this.map.get(type);
     if (!fnArr) fnArr = [];
-    fnArr.push(listener.bind(this) as any);
+    fnArr.push(listener as any);
     this.map.set(type, fnArr);
     return () => {
       this.delete(type, listener);
@@ -33,7 +33,7 @@ export class Subscribe<Q> implements ISubscribe<Q> {
     if (!fnArr) fnArr = [];
 
     let _fn = (data: Q[T]) => {
-      listener.bind(this)(data);
+      listener.apply(this, [data]);
       if (!fnArr) return;
       let index = fnArr.indexOf(_fn as any);
       if (index !== -1) fnArr.splice(index, 1);

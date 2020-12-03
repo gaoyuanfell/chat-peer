@@ -40,7 +40,7 @@
               }
             ],
             "scripts": [],
-            "allowedCommonJsDependencies": ["protobufjs", "chat-peer-models", "chat-peer-sdk"]
+            "allowedCommonJsDependencies": ["protobufjs", "chat-peer-models", "chat-peer-sdk", "hash.js"]
           },
           "configurations": {
             "production": {

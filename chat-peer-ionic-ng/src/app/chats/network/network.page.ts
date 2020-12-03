@@ -1,7 +1,10 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ViewDidEnter, ViewDidLeave } from "@ionic/angular";
 import { Subject } from "rxjs";
-import { MainPeerHelper } from "chat-peer-sdk";
+import { BusPeerHelper, MainPeerHelper } from "chat-peer-sdk";
+import { packForwardBlocks } from "chat-peer-models";
+import { BusMessageType } from "src/common/enum";
+import { ChatService } from "src/services/chat.service";
 
 @Component({
   selector: "app-network",
@@ -9,7 +12,7 @@ import { MainPeerHelper } from "chat-peer-sdk";
   styleUrls: ["./network.page.scss"],
 })
 export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
-  constructor(private cdrf: ChangeDetectorRef) {}
+  constructor(private cdrf: ChangeDetectorRef, private chat: ChatService) {}
 
   message: string;
 
@@ -39,10 +42,27 @@ export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
     console.info(peer);
   }
 
+  resconnect(otherAddress: string) {
+    let peer = MainPeerHelper.instance.reslaunch(otherAddress);
+    console.info(peer);
+  }
+
   status(address: string) {
     let boo = MainPeerHelper.instance.has(address);
     if (!boo) return false;
     return MainPeerHelper.instance.getPeer(address).connected;
+  }
+
+  hasKey(address: string) {
+    return MainPeerHelper.instance.has(address);
+  }
+
+  lunchChat(address: string) {
+    this.chat.lunchChat(address);
+  }
+
+  scanAddressList() {
+    MainPeerHelper.instance.scanAddressList();
   }
 
   ionViewDidLeave() {

@@ -26,6 +26,8 @@
     "@ionic/angular": "^5.5.1",
     "chat-peer-models": "^1.0.0",
     "chat-peer-sdk": "^1.0.0",
+    "hash.js": "^1.1.7",
+    "idb": "^5.0.8",
     "protobufjs": "^6.10.2",
     "rxjs": "~6.6.3",
     "tslib": "^2.0.3",
