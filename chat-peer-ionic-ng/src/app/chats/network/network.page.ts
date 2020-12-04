@@ -1,9 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ViewDidEnter, ViewDidLeave } from "@ionic/angular";
 import { Subject } from "rxjs";
-import { BusPeerHelper, MainPeerHelper } from "chat-peer-sdk";
-import { packForwardBlocks } from "chat-peer-models";
-import { BusMessageType } from "src/common/enum";
+import { MainPeerHelper } from "chat-peer-sdk";
 import { ChatService } from "src/services/chat.service";
 
 @Component({

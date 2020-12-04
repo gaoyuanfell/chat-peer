@@ -73,8 +73,10 @@ export class PeerBus extends Peer<EmitTypeBus> {
           break;
         case "closed":
         case "disconnected":
+          break;
         case "failed":
-          this.close();
+          this.rtcPeer.close();
+          this.closed();
           break;
       }
     };
@@ -123,6 +125,7 @@ export class PeerBus extends Peer<EmitTypeBus> {
 
   async offerHandler(description: RTCSessionDescriptionInit, from: string) {
     this.to = from;
+    console.info(this.rtcPeer.connectionState);
     await this.rtcPeer.setRemoteDescription(
       new RTCSessionDescription(description)
     );
@@ -206,7 +209,15 @@ export class PeerBus extends Peer<EmitTypeBus> {
 
   close() {
     this.rtcPeer.close();
+  }
+
+  closed() {
     this.emit("closed");
-    this.destroy();
+  }
+
+  destroy() {
+    this.close();
+    this.emit("destroyed");
+    this.clear();
   }
 }

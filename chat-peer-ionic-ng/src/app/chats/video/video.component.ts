@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from "@angular/core";
-import { ModalController, NavController, ViewWillEnter, ViewWillLeave } from "@ionic/angular";
+import { ModalController, ViewWillLeave } from "@ionic/angular";
 import { packForwardBlocks, unpackForwardBlocks } from "chat-peer-models";
 import { BusPeerHelper, PeerBus } from "chat-peer-sdk";
 import { BusMessageType } from "src/common/enum";

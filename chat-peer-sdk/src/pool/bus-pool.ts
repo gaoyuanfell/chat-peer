@@ -34,11 +34,7 @@ export class BusPool {
     if (this.pool.has(otherAddress)) {
       let _pool = this.pool.get(otherAddress);
       if (_pool && _pool.has(businessId)) {
-        let peer = _pool.get(businessId);
         _pool.delete(businessId);
-        if (peer && peer.connected) {
-          peer.close();
-        }
       }
     }
   }

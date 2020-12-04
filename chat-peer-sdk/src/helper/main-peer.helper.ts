@@ -72,14 +72,8 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   }
 
   get socket() {
-    // if (!this._socket) throw new Error("the main pipe must be connected");
     return this._socket;
   }
-
-  // get pool() {
-  //   if (!this._pool) throw new Error("method waitingConnection needs to be executed first");
-  //   return this._pool;
-  // }
 
   /**
    * 等待连接
@@ -87,6 +81,7 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   waitingConnection(address: string) {
     return new Promise<boolean>((resolve, reject) => {
       this._pool = new Pool(address);
+      (window as any).Pool = this._pool;
       /**
        * 信令服务 socket
        */
@@ -154,8 +149,10 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
       this.signalSend(to, from, blocks, bridgeAddress);
     });
     peer.on("closed", () => {
-      this._pool.remove(peer.to);
       this.emit("peerClosed", peer);
+    });
+    peer.on("destroyed", () => {
+      this._pool.remove(peer.to);
     });
     peer.on("connected", () => {
       this.emit("peerConnected", peer);
@@ -239,6 +236,12 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     }
   }
 
+  private answer(otherAddress: string) {
+    let peer = this._pool.get(otherAddress);
+    if (peer.connectionState !== "new") peer.create();
+    this.peerBindSendEvent(peer);
+  }
+
   /**
    * 处理接收到的信令
    */
@@ -251,11 +254,8 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     let peer;
     switch (type) {
       case DataBlockType.OFFER:
-        if (this._pool.has(otherAddress)) {
-          this._pool.remove(otherAddress);
-        }
+        this.answer(otherAddress);
         peer = this._pool.get(otherAddress);
-        this.peerBindSendEvent(peer);
         peer.bridgeAddress = bridgeAddress;
         peer.offerHandler(
           PeerDescription.decode(new Uint8Array(buffer)).toJSON(),
@@ -357,14 +357,21 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
       .map(([key]) => key);
     for (let index = 0; index < list.length; index++) {
       const addr = list[index];
-      let model = new AddressTableMessage({
-        type: AddressTableTypeMessage.REQUEST,
-        from: this.address,
-        to: addr,
-      });
-      let uint = encodeMessage(MsgTypes.ADDRESS_TABLE, model);
-      this.send(model.to, uint);
+      this.scanByAddress(addr);
     }
+  }
+
+  /**
+   * 根据address获取 地址表
+   */
+  scanByAddress(addr: string) {
+    let model = new AddressTableMessage({
+      type: AddressTableTypeMessage.REQUEST,
+      from: this.address,
+      to: addr,
+    });
+    let uint = encodeMessage(MsgTypes.ADDRESS_TABLE, model);
+    this.send(model.to, uint);
   }
 
   /**

@@ -42,6 +42,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
 
   createPool(address: string) {
     this._pool = new BusPool(address);
+    (window as any).BusPool = this._pool;
   }
 
   // 主通道消息
@@ -104,6 +105,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     switch (type) {
       case DataBlockType.OFFER:
         this.answer(otherAddress, businessId);
+
         peer.offerHandler(
           PeerDescription.decode(new Uint8Array(buffer)).toJSON(),
           otherAddress
@@ -135,6 +137,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
     if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let peer = this._pool.get(otherAddress, businessId);
+    if (peer.connectionState !== "new") peer.create();
     this.peerBindSendEvent(peer, otherAddress);
     return peer;
   }
@@ -159,8 +162,10 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
       this.emit("message", event);
     });
     peer.on("closed", () => {
-      this._pool.remove(peer.to, peer.businessId);
       this.emit("closed");
+    });
+    peer.on("destroyed", () => {
+      this._pool.remove(peer.to, peer.businessId);
     });
   }
 }

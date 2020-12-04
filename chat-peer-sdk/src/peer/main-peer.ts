@@ -73,8 +73,10 @@ export class PeerMain extends Peer<EmitTypeMain> {
           break;
         case "closed":
         case "disconnected":
+          break;
         case "failed":
-          this.close();
+          this.rtcPeer.close();
+          this.closed();
           break;
       }
     };
@@ -118,7 +120,7 @@ export class PeerMain extends Peer<EmitTypeMain> {
     };
     this.channel.onclose = () => {
       console.info("channel closed");
-      this.close();
+      this.closed();
     };
   }
 
@@ -212,7 +214,15 @@ export class PeerMain extends Peer<EmitTypeMain> {
 
   close() {
     this.rtcPeer.close();
+  }
+
+  closed() {
     this.emit("closed");
-    this.destroy();
+  }
+
+  destroy() {
+    this.close();
+    this.emit("destroyed");
+    this.clear();
   }
 }

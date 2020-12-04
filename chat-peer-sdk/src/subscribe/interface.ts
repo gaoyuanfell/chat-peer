@@ -29,6 +29,7 @@ export interface EmitTypeBaseMap {
   failed: Event;
   new: Event;
   closed: Event;
+  destroyed: Event;
   icegatheringstatechange: RTCIceGatheringState;
   signalingstatechange: RTCSignalingState;
   iceconnectionstatechange: RTCIceConnectionState;

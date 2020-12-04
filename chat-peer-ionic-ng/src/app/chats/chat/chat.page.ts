@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { ModalController, NavController, ViewDidEnter, ViewDidLeave, ViewWillEnter } from "@ionic/angular";
-import { Subject } from "rxjs";
+import { NavController, ViewDidEnter, ViewDidLeave, ViewWillEnter } from "@ionic/angular";
 import { BusPeerHelper, PeerBus } from "chat-peer-sdk";
 import { packForwardBlocks } from "chat-peer-models";
 import { BusMessageType } from "src/common/enum";
@@ -13,12 +12,9 @@ import { ChatService } from "src/services/chat.service";
   styleUrls: ["./chat.page.scss"],
 })
 export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnter {
-  // peer: PeerBus;
-
   listeners = [];
 
   messageList = [];
-  // messageList$ = new Subject();
 
   messages: string;
 
@@ -77,7 +73,7 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
       }),
       this.peer.on("closed", () => {
         console.info("closed");
-        this.chatRecovery();
+        console.info(this.peer);
       }),
       this.peer.on("connected", () => {
         console.info("连接成功");
@@ -95,16 +91,10 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
   // 挂断
   hangup() {}
 
-  chatRecovery() {
-    if (this.peer.connected) {
-      this.listeners.forEach((fn) => fn());
-      this.initChat();
-    }
-  }
+  chatRecovery() {}
 
   destroy() {
-    this.listeners.forEach((fn) => fn());
-    this.peer.close();
+    this.peer.destroy();
   }
 
   ionViewDidLeave() {

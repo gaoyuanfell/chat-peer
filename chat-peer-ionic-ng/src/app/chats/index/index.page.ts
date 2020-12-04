@@ -36,7 +36,6 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
 
   ngOnInit() {
     this.getChatList();
-
     chatListUpdate$.subscribe(() => {
       this.getChatList();
     });
