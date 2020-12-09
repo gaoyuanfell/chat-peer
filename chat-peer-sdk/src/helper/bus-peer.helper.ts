@@ -75,7 +75,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
    */
   send(otherAddress: string, data: ArrayBuffer) {
     let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
-    if (!mainPeer.connected) throw new Error("peer is not connected");
+    if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let model = new TransferMessage({
       to: otherAddress,
       from: this.address,

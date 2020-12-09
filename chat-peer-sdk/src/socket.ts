@@ -10,7 +10,6 @@ import {
   promiseOut,
   TransferMessage,
   unpackForwardBlocks,
-  PromiseOutType,
 } from "chat-peer-models";
 
 export class SocketService extends AbstractPeerServer {
