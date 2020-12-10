@@ -2,6 +2,8 @@ import { Contact } from "./contact";
 
 /**
  * 
+ * 参考 https://github.com/jeanlauliac/kademlia-dht.git
+ * 
  *  (A ⊕ B)  == (B ⊕ A)：对称性，A到B的距离和B到A的距离是相等的。
     (A ⊕ A) == 0：节点自身与自身的距离是0
     (A ⊕ B) > 0 ：任意两个节点之间的距离一定大于0

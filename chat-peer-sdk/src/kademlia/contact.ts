@@ -8,7 +8,7 @@ export class Contact {
     this.endpoint = endpoint;
   }
 
-  toString(short: boolean) {
+  toString(short: boolean = false) {
     let ids = this.id.toString(short);
     if (typeof this.endpoint === "undefined") return ids;
     return `${ids}/${this.endpoint}`;

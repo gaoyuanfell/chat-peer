@@ -45,7 +45,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     (window as any).BusPool = this._pool;
   }
 
-  // 主通道消息
+  // 系统消息 主通道消息
   onMainBusiness(buffer: ArrayBuffer) {
     let dataArr = new Uint8Array(buffer, 1);
     let msg = decodeMessage(MsgTypes.BUSINESS, dataArr);
@@ -91,7 +91,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
     return this._pool.get(otherAddress, businessId);
   }
 
-  /** // TODO 修改 case DataBlockType.OFFER:
+  /**
    * 处理接收到的信令
    */
   private onSignal(

@@ -24,7 +24,7 @@ export class LookupList {
     return this._capacity;
   }
 
-  *_next() {
+  private *_next() {
     for (let index = 0; index < this._slots.length; index++) {
       const slot = this._slots[index];
       if (!slot.processed) {

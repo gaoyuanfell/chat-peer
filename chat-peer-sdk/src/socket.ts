@@ -44,6 +44,7 @@ export class SocketService extends AbstractPeerServer {
           case MsgTypes.TRANSFER:
             this.onTransfer(data);
             break;
+          // 获取信令服务器用户列表
           case MsgTypes.SERVICE_PEER_TABLE:
             this.onServerPeerList(data);
             break;
@@ -63,6 +64,10 @@ export class SocketService extends AbstractPeerServer {
     return p.promise;
   }
 
+  /**
+   * // TODO 需要考虑 promiseMap 存储的promise没有得到响应的问题，需要添加一个延时销毁的操作
+   * @param data
+   */
   onServerPeerList(data: ArrayBuffer) {
     let dataArr = new Uint8Array(data, 1);
     let msg = decodeMessage(MsgTypes.SERVICE_PEER_TABLE, dataArr);
@@ -85,10 +90,8 @@ export class SocketService extends AbstractPeerServer {
 
   send(receiver: string, from: string, blocks: IDataBlock[]) {
     let pack = packForwardBlocks(blocks);
-
     let msg = new TransferMessage({ to: receiver, from: from, data: pack });
     let sendData = encodeMessage(MsgTypes.TRANSFER, msg);
-
     this.wssSend(sendData);
   }
 

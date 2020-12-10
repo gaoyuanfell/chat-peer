@@ -13,6 +13,7 @@ export class PeerHelper {
     MainPeerHelper.instance.registerMainBusinessBefore(
       BusPeerHelper.instance.onMainBusinessBefore.bind(BusPeerHelper.instance)
     );
+
     return MainPeerHelper.instance.waitingConnection(address);
   }
 

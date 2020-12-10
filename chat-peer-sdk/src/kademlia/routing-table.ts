@@ -47,7 +47,7 @@ export class RoutingTable {
     res.bucket.remove(contact);
   }
 
-  _splitAndStore(contact: Contact, opt: BucketRecursion) {
+  private _splitAndStore(contact: Contact, opt: BucketRecursion) {
     let node = {
       left: new Bucket(this._bucketSize),
       right: new Bucket(this._bucketSize),
@@ -60,15 +60,15 @@ export class RoutingTable {
     return bucket.store(contact);
   }
 
-  _findBucket(contact: Contact): BucketRecursion {
+  private _findBucket(contact: Contact): BucketRecursion {
     let parent: BucketTree | Bucket | null = null;
     let node: BucketTree | Bucket = this._root;
-    let allowSplit = true;
+    let allowSplit = 1;
     let i = 0;
     let bit;
     for (; i < Id.BIT_SIZE; ++i) {
       bit = contact.id.at(i);
-      allowSplit &&= bit === this.id.at(i);
+      allowSplit &= +(bit === this.id.at(i));
       if (node instanceof Bucket) {
         break;
       }
@@ -78,13 +78,13 @@ export class RoutingTable {
     return {
       parent: parent,
       bucket: node as Bucket,
-      allowSplit: allowSplit,
+      allowSplit: !!allowSplit,
       nth: i,
       bit: bit as boolean,
     };
   }
 
-  _find(
+  private _find(
     id: Id,
     rank: number,
     node: BucketTree | Bucket,
@@ -111,4 +111,25 @@ export class RoutingTable {
     this._find(id, 0, this._root, count, list);
     return list.getContacts();
   }
+
+  toString(indent: number = 0) {
+    return nodeToString(this._root, "", indent);
+  }
+}
+
+function nodeToString(
+  node: BucketTree | Bucket,
+  prefix: string,
+  indent: number
+) {
+  var res = "";
+  if (node instanceof Bucket) {
+    res += new Array(indent).join(" ") + node.toString() + "\n";
+  } else {
+    res += new Array(indent).join(" ") + "+ " + prefix + "0:\n";
+    res += nodeToString(node.left, prefix + "0", indent + 4);
+    res += new Array(indent).join(" ") + "+ " + prefix + "1:\n";
+    res += nodeToString(node.right, prefix + "1", indent + 4);
+  }
+  return res;
 }

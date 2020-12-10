@@ -7,6 +7,7 @@ export class Id {
   static SHORT_STR_PRE_LEN = 5;
   static SHORT_STR_SUF_LEN = 2;
 
+  _key!: string;
   _buf: ArrayBuffer;
   get _uint() {
     return new Uint8Array(this._buf);
@@ -23,7 +24,9 @@ export class Id {
     for (let index = 0; index < arr.length; index++) {
       u[index] = arr[index];
     }
-    return new Id(a);
+    let id = new Id(a);
+    id._key = key;
+    return id;
   }
 
   static zero() {

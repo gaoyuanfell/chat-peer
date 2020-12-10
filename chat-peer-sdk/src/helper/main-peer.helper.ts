@@ -19,12 +19,15 @@ import { SocketService } from "../socket";
 import { PeerMain } from "../peer";
 import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
+import { BUCKET_SIZE, Id, RoutingTable } from "../kademlia";
+import hash from "hash.js";
 
 const peerHelperSymbol = Symbol("peerHelperSymbol");
 
 export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   _pool!: Pool;
   _socket!: SocketService;
+  _routingTable!: RoutingTable;
   [peerHelperSymbol]: MainPeerHelper;
 
   constructor() {
@@ -39,6 +42,26 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     return new MainPeerHelper();
   }
 
+  get pool() {
+    return this._pool;
+  }
+
+  get address() {
+    return this._pool!.address;
+  }
+
+  get routingTable() {
+    return this._routingTable;
+  }
+
+  set routingTable(val) {
+    this._routingTable = val;
+  }
+
+  get socket() {
+    return this._socket;
+  }
+
   has(address: string) {
     if (!address) throw new Error("address connot be empty");
     return this._pool.has(address);
@@ -49,21 +72,16 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     return this._pool.get(address);
   }
 
-  get pool() {
-    return this._pool;
-  }
-
-  get address() {
-    return this._pool!.address;
-  }
-
   getPeerList() {
     if (!this._pool) return [];
     return this._pool.getAll(); //.filter(([_, peer]) => peer.connected);
   }
 
   getServerPeerList() {
-    let businessId = Math.random().toString();
+    let businessId = hash
+      .sha256()
+      .update(Math.random().toString())
+      .digest("hex");
     let uint = encodeMessage(MsgTypes.SERVICE_PEER_TABLE, {
       businessId: businessId,
     });
@@ -71,14 +89,15 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     return this.socket.generatePromise<Array<string>>(businessId);
   }
 
-  get socket() {
-    return this._socket;
-  }
-
   /**
    * 等待连接
    */
   waitingConnection(address: string) {
+    /**
+     * 注册路由表
+     */
+    this.routingTable = new RoutingTable(Id.fromKey(this.address), BUCKET_SIZE);
+
     return new Promise<boolean>((resolve, reject) => {
       this._pool = new Pool(address);
       (window as any).Pool = this._pool;
@@ -158,6 +177,10 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
       this.emit("peerConnected", peer);
     });
     peer.on("datachannel", () => {
+      // 1. findNode
+      // 2. 返回自己最近距离的节点
+
+      this.scanByAddress(peer.to);
       /**
        * 节点扫描
        */
@@ -286,30 +309,6 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   }
 
   /**
-   * ADDRESS_TABLE类型的处理方法
-   * @param data
-   */
-  private onAddressTable(data: ArrayBuffer) {
-    let dataArr = new Uint8Array(data, 1);
-    let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
-    msg.type === AddressTableTypeMessage.REQUEST;
-    switch (msg.type) {
-      /**
-       * 发送自己的路由表
-       */
-      case AddressTableTypeMessage.REQUEST:
-        this.addressTableRequest(msg);
-        break;
-      /**
-       * 接收到路由表后 更新自己的连接
-       */
-      case AddressTableTypeMessage.RESPONSE:
-        this.addressTableResponse(msg);
-        break;
-    }
-  }
-
-  /**
    * BRIDGE类型的处理方法
    */
   private onBridge(data: ArrayBuffer) {
@@ -345,6 +344,34 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
         this.onSignal(type, buffer, otherAddress, msg.from);
       }
     );
+  }
+
+  findNode(otherAddress: string) {
+    return this.routingTable.find(Id.fromKey(otherAddress));
+  }
+
+  /**
+   * ADDRESS_TABLE类型的处理方法
+   * @param data
+   */
+  private onAddressTable(data: ArrayBuffer) {
+    let dataArr = new Uint8Array(data, 1);
+    let msg = decodeMessage(MsgTypes.ADDRESS_TABLE, dataArr);
+    msg.type === AddressTableTypeMessage.REQUEST;
+    switch (msg.type) {
+      /**
+       * 发送自己的路由表
+       */
+      case AddressTableTypeMessage.REQUEST:
+        this.addressTableRequest(msg);
+        break;
+      /**
+       * 接收到路由表后 更新自己的连接
+       */
+      case AddressTableTypeMessage.RESPONSE:
+        this.addressTableResponse(msg);
+        break;
+    }
   }
 
   /**
