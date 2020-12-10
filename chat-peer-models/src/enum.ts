@@ -7,6 +7,9 @@ export enum MsgTypes {
   BRIDGE, // 桥接
   BUSINESS, // 业务数据 通过主通道
   BUSINESS_BEFORE, // 处理开始业务之前的业务逻辑
+
+  KAD_PING,
+  KAD_FINDNODE, // 查找路由
 }
 
 export enum DataBlockType {
