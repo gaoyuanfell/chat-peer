@@ -1,14 +1,14 @@
 import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
 import { AlertController, ModalController } from "@ionic/angular";
-import { ChatResponseMessage, packForwardBlocks, promiseOut } from "chat-peer-models";
+import { ChatResponseMessage, packForwardBlocks, PromiseOut } from "chat-peer-models";
 import { BusPeerHelper } from "chat-peer-sdk";
 import { VideoComponent } from "src/app/chats/video/video.component";
 import { ChatDBModel, ChatType } from "src/common/db.helper";
 import { BusMessageType } from "src/common/enum";
 import { chatListUpdate$, mainPeer$ } from "src/common/subscribes";
 import { UserService } from "./user.service";
-import hash from "hash.js";
+import * as hash from "hash.js";
 
 @Injectable({
   providedIn: "root",
@@ -97,7 +97,7 @@ export class ChatService {
   }
 
   async chatAgree(options: { header: string; message: string }) {
-    let promise = promiseOut<boolean>();
+    let promise = new PromiseOut<boolean>();
     const alert = await this.alert.create({
       header: options.header,
       message: options.message,

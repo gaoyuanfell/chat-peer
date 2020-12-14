@@ -1,5 +1,5 @@
-import { IDataBlock } from "./interface";
-import { DataBlockType, MsgTypes } from "./enum";
+import { PromiseOutType } from "./interface";
+import { MsgTypes } from "./enum";
 import {
   LoginMessage,
   LogoutMessage,
@@ -8,6 +8,8 @@ import {
   BridegMessage,
   BusinessDataMessage,
   ServerPeerTableMessage,
+  RPCrequestMessage,
+  RPCresponseMessage,
 } from "./models";
 
 const DATAPACK_VERSION = 1;
@@ -86,6 +88,8 @@ type MessageTypeDict = {
   [MsgTypes.BRIDGE]: BridegMessage;
   [MsgTypes.BUSINESS]: BusinessDataMessage;
   [MsgTypes.BUSINESS_BEFORE]: TransferMessage;
+  [MsgTypes.RPC_REQUEST_MESSAGE]: RPCrequestMessage;
+  [MsgTypes.RPC_RESPONSE_MESSAGE]: RPCresponseMessage;
 };
 
 const messageTypeDict = {
@@ -97,6 +101,8 @@ const messageTypeDict = {
   [MsgTypes.BRIDGE]: BridegMessage,
   [MsgTypes.BUSINESS]: BusinessDataMessage,
   [MsgTypes.BUSINESS_BEFORE]: TransferMessage,
+  [MsgTypes.RPC_REQUEST_MESSAGE]: RPCrequestMessage,
+  [MsgTypes.RPC_RESPONSE_MESSAGE]: RPCresponseMessage,
 };
 
 /**
@@ -153,16 +159,50 @@ export const arrayDiff = <T>(current: Array<T>, diff: Array<T>) => {
   return diffArr;
 };
 
-export function promiseOut<T>() {
-  let resolve = (data: T) => {};
-  let reject = (error?: any) => {};
+export function promiseOut<T>(): PromiseOutType<T> {
+  let resolve: (value?: T | PromiseLike<T>) => void = (
+    value?: T | PromiseLike<T>
+  ) => {};
+  let reject: (reason?: any) => void = (reason?: any) => {};
   let promise = new Promise<T>((r, j) => {
-    resolve = r;
-    reject = j;
+    resolve = (value?: T | PromiseLike<T>) => {
+      r(value!);
+    };
+    reject = (reason?: any) => {
+      j(reason);
+    };
   });
   return {
     promise,
     resolve,
     reject,
   };
+}
+
+export class PromiseOut<T> {
+  promise: Promise<T>;
+  is_resolved = false;
+  is_rejected = false;
+  is_finished = false;
+  value?: T;
+  reason?: unknown;
+  resolve!: (value?: T | PromiseLike<T>) => void;
+  reject!: (reason?: any) => void;
+  constructor() {
+    this.promise = new Promise<T>((resolve, reject) => {
+      this.resolve = (value?: T | PromiseLike<T>) => {
+        this.is_resolved = true;
+        this.is_finished = true;
+        resolve(value!);
+      };
+      this.reject = (reason?: any) => {
+        this.is_rejected = true;
+        this.is_finished = true;
+        reject(reason);
+      };
+    }).then(
+      (value) => (this.value = value),
+      (reason) => (this.reason = reason)
+    );
+  }
 }

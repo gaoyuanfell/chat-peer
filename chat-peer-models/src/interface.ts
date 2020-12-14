@@ -28,5 +28,5 @@ export interface PeerServer {
 export interface PromiseOutType<T> {
   promise: Promise<T>;
   resolve: (data?: T) => void;
-  reject: (reason?: T) => void;
+  reject: (reason?: any) => void;
 }

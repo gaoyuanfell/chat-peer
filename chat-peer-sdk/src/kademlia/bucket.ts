@@ -17,10 +17,6 @@ import { Contact } from "./contact";
     Step4：按照高位到地位处理完后，这个Key值就对应于二叉树上的某个叶子节点。
  * 
  * 
- * 
- * 
- * 
- * 
  */
 
 /**

@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { ModalController } from "@ionic/angular";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-contact",
@@ -7,7 +8,23 @@ import { ModalController } from "@ionic/angular";
   styleUrls: ["./contact.page.scss"],
 })
 export class ContactPage implements OnInit {
-  constructor(private modal: ModalController) {}
+  constructor(private modal: ModalController, private peer: PeerService) {}
+
+  otherAddress;
+  findAddress;
+  targetAddress;
+
+  find() {
+    this.peer.rpc.findNode(this.otherAddress, this.findAddress).then((res) => {
+      console.info(res);
+    });
+  }
+
+  lookup() {
+    this.peer.dht.find(this.targetAddress).then((res) => {
+      console.info(res);
+    });
+  }
 
   ngOnInit() {}
 

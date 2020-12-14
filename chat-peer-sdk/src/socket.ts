@@ -7,7 +7,7 @@ import {
   MsgTypes,
   packForwardBlocks,
   pickTypedArrayBuffer,
-  promiseOut,
+  PromiseOut,
   TransferMessage,
   unpackForwardBlocks,
 } from "chat-peer-models";
@@ -59,7 +59,7 @@ export class SocketService extends AbstractPeerServer {
   private promiseMap = new Map();
 
   generatePromise<T>(businessId: string) {
-    let p = promiseOut<T>();
+    let p = new PromiseOut<T>();
     this.promiseMap.set(businessId, p);
     return p.promise;
   }

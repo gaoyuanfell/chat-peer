@@ -13,21 +13,25 @@ import {
   PeerDescription,
   pickTypedArrayBuffer,
   unpackForwardBlocks,
+  RPCrequestMessage,
+  RPCresponseMessage,
+  RPCfindNodeMessage,
+  RPCPongMessage,
 } from "chat-peer-models";
 import { Pool } from "../pool";
 import { SocketService } from "../socket";
 import { PeerMain } from "../peer";
 import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
-import { BUCKET_SIZE, Id, RoutingTable } from "../kademlia";
-import hash from "hash.js";
+import { uuid } from "../util";
+import { Contact, DHT, Id, RPC } from "../kademlia";
 
 const peerHelperSymbol = Symbol("peerHelperSymbol");
 
 export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   _pool!: Pool;
   _socket!: SocketService;
-  _routingTable!: RoutingTable;
+
   [peerHelperSymbol]: MainPeerHelper;
 
   constructor() {
@@ -50,14 +54,6 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     return this._pool!.address;
   }
 
-  get routingTable() {
-    return this._routingTable;
-  }
-
-  set routingTable(val) {
-    this._routingTable = val;
-  }
-
   get socket() {
     return this._socket;
   }
@@ -74,14 +70,11 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
 
   getPeerList() {
     if (!this._pool) return [];
-    return this._pool.getAll(); //.filter(([_, peer]) => peer.connected);
+    return this._pool.getAll();
   }
 
   getServerPeerList() {
-    let businessId = hash
-      .sha256()
-      .update(Math.random().toString())
-      .digest("hex");
+    let businessId = uuid();
     let uint = encodeMessage(MsgTypes.SERVICE_PEER_TABLE, {
       businessId: businessId,
     });
@@ -92,11 +85,16 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   /**
    * 等待连接
    */
+  rpc!: RPC;
+  dht!: DHT;
   waitingConnection(address: string) {
     /**
      * 注册路由表
      */
-    this.routingTable = new RoutingTable(Id.fromKey(this.address), BUCKET_SIZE);
+    this.rpc = new RPC();
+    this.dht = new DHT(this.rpc, Id.fromKey(address));
+    (window as any).DHT = this.dht;
+    this.rpcReceive();
 
     return new Promise<boolean>((resolve, reject) => {
       this._pool = new Pool(address);
@@ -172,19 +170,19 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     });
     peer.on("destroyed", () => {
       this._pool.remove(peer.to);
+      this.onMainDestroyed(peer);
     });
     peer.on("connected", () => {
       this.emit("peerConnected", peer);
     });
     peer.on("datachannel", () => {
-      // 1. findNode
-      // 2. 返回自己最近距离的节点
+      this.emit("peerDatachannel", peer);
+      this.onDHTdiscovered(peer);
 
-      this.scanByAddress(peer.to);
       /**
        * 节点扫描
        */
-      // this.scanAddressList();
+      // this.scanByAddress(peer.to);
     });
     peer.on("message", (e) => {
       const data = e.data;
@@ -202,6 +200,12 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
           break;
         case MsgTypes.BUSINESS_BEFORE:
           this._onMainBusinessBefore && this._onMainBusinessBefore(data);
+          break;
+        case MsgTypes.RPC_REQUEST_MESSAGE:
+          this.rpc.onRequestMessage(data);
+          break;
+        case MsgTypes.RPC_RESPONSE_MESSAGE:
+          this.rpc.onResponseMessage(data);
           break;
       }
     });
@@ -304,7 +308,8 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
 
   send(otherAddress: string, data: ArrayBuffer) {
     let peer = this._pool.get(otherAddress);
-    if (!peer!.connected) return;
+    if (!peer!.connected)
+      throw new Error(`${otherAddress}：address is not connected`);
     peer.channelSend(data);
   }
 
@@ -346,9 +351,135 @@ export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
     );
   }
 
-  findNode(otherAddress: string) {
-    return this.routingTable.find(Id.fromKey(otherAddress));
+  ////////////////////////////    远程调用      //////////////////////////
+
+  // 维护与自身距离相近的节点
+  async defendRouterTable(otherAddress: string, targetAddress: string) {
+    let addressList = await this.rpc.findNode(otherAddress, targetAddress);
+    addressList = addressList.filter((a) => a !== this.address);
+    if (addressList.length) {
+      for (let index = 0; index < addressList.length; index++) {
+        let address = addressList[index];
+        let peer = this.pool.get(address);
+        if (peer.connected) continue;
+        this.launch(address, otherAddress);
+      }
+    }
   }
+
+  // 连接成功后将对方加入路由表
+  onDHTdiscovered(peer: PeerMain) {
+    this.dht.discovered(Id.fromKey(peer.to));
+    this.rpc.onPeerLaunch(peer);
+
+    // 给对方发送一个findNode，获取对方的路由表信息
+    // 1. findNode
+    // 2. 返回自己最近距离的节点
+    // 3. 建立连接，添加到自己的路由表中
+    this.defendRouterTable(peer.to, peer.from);
+  }
+
+  onMainDestroyed(peer: PeerMain) {
+    this.dht.remove(Id.fromKey(peer.to));
+  }
+
+  /**
+   * 远程调用方法注册
+   */
+  rpcReceive() {
+    /**
+     * 查找节点
+     */
+    this.rpc.receive("findNode", this.findNode.bind(this));
+    this.rpc.receive("onFindNode", this.onFindNode.bind(this));
+
+    this.rpc.receive("ping", this.ping.bind(this));
+    this.rpc.receive("onPing", this.onPing.bind(this));
+
+    /**
+     * 节点连接
+     */
+    this.rpc.receive("launch", this.launch.bind(this));
+  }
+
+  /**
+   * @param otherAddress 发送者 id
+   * @param targetAddress 带查询id 如果是自己作为收集离自己距离近的节点
+   * @param businessId 业务id  回调用
+   */
+  private findNode(
+    otherAddress: string,
+    targetAddress: string,
+    businessId: string
+  ) {
+    let model = new RPCrequestMessage({
+      method: "onFindNode",
+      args: [this.address, targetAddress, businessId],
+    });
+    let uint = encodeMessage(MsgTypes.RPC_REQUEST_MESSAGE, model);
+    this.send(otherAddress, uint);
+  }
+
+  /**
+   * @param otherAddress 发送者 id
+   * @param targetAddress 带查询id
+   * @param businessId 业务id  回调用
+   */
+  private onFindNode(
+    otherAddress: string,
+    targetAddress: string,
+    businessId: string
+  ) {
+    let contacts = this.dht._routes.find(Id.fromKey(targetAddress));
+    let arrData = new RPCfindNodeMessage({
+      contacts: contacts.map((c) => c.id._key),
+      businessId: businessId,
+    });
+    let uintArr = RPCfindNodeMessage.encode(arrData).finish();
+    let model = new RPCresponseMessage({
+      data: packForwardBlocks([
+        { type: DataBlockType.KAD_FINDNODE, payload: uintArr },
+      ]),
+    });
+    let uint = encodeMessage(MsgTypes.RPC_RESPONSE_MESSAGE, model);
+    this.send(otherAddress, uint);
+  }
+
+  /**
+   * ping
+   * @param otherAddress 发送者 id
+   * @param businessId 业务id  回调用
+   */
+  private ping(otherAddress: string, businessId: string) {
+    let model = new RPCrequestMessage({
+      method: "onPing",
+      args: [this.address, businessId],
+    });
+    let uint = encodeMessage(MsgTypes.RPC_REQUEST_MESSAGE, model);
+    this.send(otherAddress, uint);
+  }
+
+  /**
+   * pong
+   * @param otherAddress 发送者 id
+   * @param businessId 业务id  回调用
+   */
+  private onPing(otherAddress: string, businessId: string) {
+    let arrData = new RPCPongMessage({
+      address: this.address,
+      businessId: businessId,
+    });
+    let uintArr = RPCPongMessage.encode(arrData).finish();
+    let model = new RPCresponseMessage({
+      data: packForwardBlocks([
+        { type: DataBlockType.KAD_PING, payload: uintArr },
+      ]),
+    });
+    let uint = encodeMessage(MsgTypes.RPC_RESPONSE_MESSAGE, model);
+    this.send(otherAddress, uint);
+  }
+
+  /****************************************************************/
 
   /**
    * ADDRESS_TABLE类型的处理方法

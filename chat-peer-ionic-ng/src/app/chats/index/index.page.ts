@@ -23,6 +23,10 @@ export class IndexPage implements OnInit, ViewWillEnter, ViewDidEnter {
     this.router.navigate(["/chats/network"]);
   }
 
+  goContact() {
+    this.router.navigate(["/contact"]);
+  }
+
   async getChatList() {
     this.chatList = await this.chat.getChatList();
     this.cdrf.detectChanges();

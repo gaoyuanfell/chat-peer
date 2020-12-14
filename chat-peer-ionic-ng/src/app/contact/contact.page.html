@@ -1,10 +1,18 @@
 <ion-header>
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button>
+        <ion-back-button></ion-back-button>
+      </ion-button>
+    </ion-buttons>
     <ion-title>contact</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <button routerLink="/chats">chats</button>
-  <button (click)="open()">form</button>
+  <ion-input placeholder="otherAddress" [(ngModel)]="otherAddress"></ion-input>
+  <ion-input placeholder="findAddress" [(ngModel)]="findAddress"></ion-input>
+  <ion-button (click)="find()">查找</ion-button>
+  <ion-input placeholder="targetAddress" [(ngModel)]="targetAddress"></ion-input>
+  <ion-button (click)="lookup()">并发查找</ion-button>
 </ion-content>

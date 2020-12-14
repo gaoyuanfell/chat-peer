@@ -21,5 +21,13 @@ export class PeerHelper {
     MainPeerHelper.instance.scanAddressList();
   }
 
+  get rpc() {
+    return MainPeerHelper.instance.rpc;
+  }
+
+  get dht() {
+    return MainPeerHelper.instance.dht;
+  }
+
   destroy() {}
 }

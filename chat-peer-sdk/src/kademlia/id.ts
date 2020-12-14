@@ -7,6 +7,9 @@ export class Id {
   static SHORT_STR_PRE_LEN = 5;
   static SHORT_STR_SUF_LEN = 2;
 
+  /**
+   * public address
+   */
   _key!: string;
   _buf: ArrayBuffer;
   get _uint() {

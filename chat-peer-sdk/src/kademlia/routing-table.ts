@@ -32,6 +32,11 @@ export class RoutingTable {
     let res = this._findBucket(contact);
     if (res.bucket.store(contact)) return null;
 
+    // if (!res.allowSplit || res.nth + 1 === Id.BIT_SIZE) {
+    //   return res.bucket.oldest;
+    // }
+
+    // TODO k-桶分割算法得考察
     this._splitAndStore(contact, res);
     return null;
   }
@@ -44,7 +49,7 @@ export class RoutingTable {
 
   remove(contact: Contact) {
     let res = this._findBucket(contact);
-    res.bucket.remove(contact);
+    return res.bucket.remove(contact);
   }
 
   private _splitAndStore(contact: Contact, opt: BucketRecursion) {

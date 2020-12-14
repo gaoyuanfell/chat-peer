@@ -2,8 +2,8 @@ import { Component, OnInit } from "@angular/core";
 import { Title } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { NavController } from "@ionic/angular";
-import { PeerHelper } from "chat-peer-sdk";
 import { UserService } from "src/services/user.service";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-login",
@@ -11,11 +11,13 @@ import { UserService } from "src/services/user.service";
   styleUrls: ["./login.page.scss"],
 })
 export class LoginPage implements OnInit {
-  constructor(private router: Router, private user: UserService, private title: Title, private nav: NavController) {
-    this.peerHelper = new PeerHelper();
-  }
-
-  peerHelper: PeerHelper;
+  constructor(
+    private router: Router,
+    private user: UserService,
+    private title: Title,
+    private nav: NavController,
+    private peer: PeerService
+  ) {}
 
   ngOnInit() {
     this.login();
@@ -29,7 +31,7 @@ export class LoginPage implements OnInit {
     console.info(this.address);
     this.title.setTitle(`${this.address}`);
     this.user.setCurrentAddress(this.address);
-    this.peerHelper.create(this.address);
+    this.peer.create(this.address);
     this.router.navigate(["/chats"]);
     // this.nav.navigateForward(["/chats"]);
   }

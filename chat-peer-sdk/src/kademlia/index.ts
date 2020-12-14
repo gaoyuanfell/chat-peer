@@ -5,3 +5,5 @@ export * from "./lookup";
 export * from "./lookup-list";
 export * from "./routing-table";
 export * from "./const";
+export * from "./rpc";
+export * from "./dht";

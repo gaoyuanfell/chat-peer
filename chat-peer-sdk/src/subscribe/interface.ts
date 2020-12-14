@@ -73,6 +73,7 @@ export interface EmitTypeBusHelperMap {
 export interface EmitTypeMainHelperMap {
   peerConnected: PeerMain;
   peerClosed: PeerMain;
+  peerDatachannel: PeerMain;
 }
 
 type Partials<T> = {

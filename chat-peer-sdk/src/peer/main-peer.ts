@@ -218,10 +218,11 @@ export class PeerMain extends Peer<EmitTypeMain> {
 
   closed() {
     this.emit("closed");
+    this.destroy();
   }
 
   destroy() {
-    this.close();
+    // this.close();
     this.emit("destroyed");
     this.clear();
   }

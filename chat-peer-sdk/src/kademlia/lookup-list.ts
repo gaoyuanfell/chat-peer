@@ -24,18 +24,14 @@ export class LookupList {
     return this._capacity;
   }
 
-  private *_next() {
-    for (let index = 0; index < this._slots.length; index++) {
-      const slot = this._slots[index];
-      if (!slot.processed) {
-        slot.processed = true;
-        yield slot.contact;
+  next() {
+    for (let i = 0; i < this._slots.length; ++i) {
+      if (!this._slots[i].processed) {
+        this._slots[i].processed = true;
+        return this._slots[i].contact;
       }
     }
-  }
-
-  next() {
-    return this._next().next().value;
+    return null;
   }
 
   insertMany(contacts: Contact[]) {
@@ -69,6 +65,17 @@ export class LookupList {
       return true;
     }
     return false;
+  }
+
+  find(contact: Contact) {
+    for (let i = 0; i < this._slots.length; ++i) {
+      let slot = this._slots[i];
+      let res = this._id.compareDistance(contact.id, slot.contact.id);
+      if (res > 0) return null;
+      if (res < 0) continue;
+      return this._slots[i];
+    }
+    return null;
   }
 
   getContacts() {

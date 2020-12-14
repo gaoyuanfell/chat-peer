@@ -3,9 +3,7 @@ import { Contact } from "./contact";
 import { Id } from "./id";
 
 let localId = Id.fromKey("225856");
-
 const BUCKET_SIZE = 3;
-
 let table = new RoutingTable(localId, BUCKET_SIZE);
 
 console.time("1");
@@ -15,11 +13,11 @@ for (let index = 0; index < 1000; index++) {
 }
 console.timeEnd("1");
 
-let id = Id.fromKey(`${10000000}`);
+// let id = Id.fromKey(`${10000000}`);
 
-console.info(id.toString());
+console.info(localId.toString());
 console.time("2");
-let cs = table.find(id, 3);
+let cs = table.find(localId, 10);
 console.timeEnd("2");
 console.info(cs.map((c) => c.toString() + ":" + c.id._key).join("\n"));
 
@@ -95,3 +93,9 @@ console.info("\n");
 // user2.table.toString();
 // user3.table.toString();
 // user4.table.toString();
+// 638232
+// 372354
+
+// console.info(Id.fromKey("638232")._uint);
+// console.info(Id.fromKey("372354")._uint);
+// console.info(Id.fromKey("423914")._uint);

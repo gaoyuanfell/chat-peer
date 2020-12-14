@@ -10,3 +10,5 @@ export * from "./address-table.message";
 export * from "./server-peer-table.message";
 
 export * from "./chat.message";
+
+export * from "./rpc.message";
