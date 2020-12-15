@@ -1,5 +1,7 @@
 import ws from "ws";
 import express from "express";
+import compression from "compression";
+import history from "connect-history-api-fallback";
 import https from "https";
 import http from "http";
 import fs from "fs";
@@ -9,9 +11,9 @@ import { MsgTypes } from "chat-peer-models";
 import { userManager } from "./helpers/user-manager";
 
 const port = 1129;
-const isHttp = true;
+const isHttp = false;
 
-const caPath = path.resolve(__dirname, "../ca");
+const caPath = path.resolve("./ca");
 
 export class Server {
   wss!: ws.Server;
@@ -21,8 +23,12 @@ export class Server {
   bootstrap() {
     let app = express();
 
+    app.use(history());
+
+    app.use(compression());
+
     app.use(
-      express.static("public", {
+      express.static("www", {
         maxAge: 86400000,
       })
     );

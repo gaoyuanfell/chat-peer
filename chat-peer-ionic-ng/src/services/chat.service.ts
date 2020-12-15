@@ -258,6 +258,7 @@ export class ChatService {
           otherAddress,
           businessId: msg.businessId,
         },
+        backdropDismiss: false,
       });
       await videoCom.present();
       console.info("BusPeerHelper.instance.offer(otherAddress, msg.businessId);");

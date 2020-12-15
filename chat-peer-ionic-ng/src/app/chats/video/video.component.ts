@@ -62,6 +62,10 @@ export class VideoComponent implements OnInit, OnDestroy, ViewWillLeave {
     this.modal.dismiss();
   }
 
+  onCanplay(ref: HTMLMediaElement) {
+    ref.muted = true;
+  }
+
   destroy() {
     if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop());

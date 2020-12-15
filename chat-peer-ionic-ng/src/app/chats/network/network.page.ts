@@ -21,9 +21,13 @@ export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
   listeners = [];
 
   ngOnInit() {
-    MainPeerHelper.instance.getServerPeerList().then((data) => {
-      this.addressList$.next(data);
-    });
+    try {
+      MainPeerHelper.instance.getServerPeerList().then((data) => {
+        this.addressList$.next(data);
+      });
+    } catch (error) {
+      alert(error);
+    }
 
     this.listeners.push(
       MainPeerHelper.instance.on("peerConnected", (peer) => {
