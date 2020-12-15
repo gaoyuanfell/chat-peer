@@ -2,13 +2,13 @@ import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
 import { AlertController, ModalController } from "@ionic/angular";
 import { ChatResponseMessage, packForwardBlocks, PromiseOut } from "chat-peer-models";
-import { BusPeerHelper } from "chat-peer-sdk";
 import { VideoComponent } from "src/app/chats/video/video.component";
 import { ChatDBModel, ChatType } from "src/common/db.helper";
 import { BusMessageType } from "src/common/enum";
 import { chatListUpdate$, mainPeer$ } from "src/common/subscribes";
 import { UserService } from "./user.service";
 import * as hash from "hash.js";
+import { PeerService } from "./peer.service";
 
 @Injectable({
   providedIn: "root",
@@ -18,7 +18,8 @@ export class ChatService {
     private router: Router,
     private modal: ModalController,
     private alert: AlertController,
-    private user: UserService
+    private user: UserService,
+    private peer: PeerService
   ) {}
 
   init() {
@@ -93,7 +94,7 @@ export class ChatService {
     let arr = packForwardBlocks([
       { type: BusMessageType.CHAT_REQUEST, payload: new Uint8Array(ChatResponseMessage.encode(model).finish()).buffer },
     ]);
-    BusPeerHelper.instance.send(otherAddress, arr.buffer);
+    this.peer.busPeerHelper.send(otherAddress, arr.buffer);
   }
 
   async chatAgree(options: { header: string; message: string }) {
@@ -145,7 +146,7 @@ export class ChatService {
         payload: new Uint8Array(ChatResponseMessage.encode(model).finish()).buffer,
       },
     ]);
-    BusPeerHelper.instance.send(otherAddress, arr);
+    this.peer.busPeerHelper.send(otherAddress, arr);
 
     if (!agree) return;
 
@@ -185,7 +186,7 @@ export class ChatService {
       type: ChatType.SINGLE,
       time: Date.now(),
     });
-    BusPeerHelper.instance.offer(otherAddress, msg.businessId);
+    this.peer.busPeerHelper.offer(otherAddress, msg.businessId);
   }
 
   // 视频处理
@@ -208,7 +209,7 @@ export class ChatService {
         payload: new Uint8Array(ChatResponseMessage.encode(model).finish()).buffer,
       },
     ]);
-    BusPeerHelper.instance.send(otherAddress, arr);
+    this.peer.busPeerHelper.send(otherAddress, arr);
 
     if (!agree) return;
 
@@ -261,8 +262,8 @@ export class ChatService {
         backdropDismiss: false,
       });
       await videoCom.present();
-      console.info("BusPeerHelper.instance.offer(otherAddress, msg.businessId);");
-      BusPeerHelper.instance.offer(otherAddress, msg.businessId);
+      console.info("busPeerHelper.offer(otherAddress, msg.businessId);");
+      this.peer.busPeerHelper.offer(otherAddress, msg.businessId);
     };
     start();
   }

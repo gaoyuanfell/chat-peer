@@ -1,37 +1,36 @@
 import { Contact, Id } from "../kademlia";
-import { BusPeerHelper } from "./bus-peer.helper";
-import { MainPeerHelper } from "./main-peer.helper";
+import { busPeerHelper } from "./bus-peer.helper";
+import { mainPeerHelper } from "./main-peer.helper";
 
 export class PeerHelper {
   address!: string;
 
   create(address: string) {
     this.address = address;
-    BusPeerHelper.instance.createPool(address);
-    MainPeerHelper.instance.registerMainBusiness(
-      BusPeerHelper.instance.onMainBusiness.bind(BusPeerHelper.instance)
+    busPeerHelper.createPool(address);
+    mainPeerHelper.registerMainBusiness(
+      busPeerHelper.onMainBusiness.bind(busPeerHelper)
     );
-    MainPeerHelper.instance.registerMainBusinessBefore(
-      BusPeerHelper.instance.onMainBusinessBefore.bind(BusPeerHelper.instance)
+    mainPeerHelper.registerMainBusinessBefore(
+      busPeerHelper.onMainBusinessBefore.bind(busPeerHelper)
     );
-
-    return MainPeerHelper.instance.waitingConnection(address);
+    return mainPeerHelper.waitingConnection(address);
   }
 
   scanAddressList() {
-    MainPeerHelper.instance.scanAddressList();
+    mainPeerHelper.scanAddressList();
   }
 
   get rpc() {
-    return MainPeerHelper.instance.rpc;
+    return mainPeerHelper.rpc;
   }
 
   get dht() {
-    return MainPeerHelper.instance.dht;
+    return mainPeerHelper.dht;
   }
 
   async find(targetAddress: string) {
-    let peer = MainPeerHelper.instance.pool.get(targetAddress);
+    let peer = mainPeerHelper.pool.get(targetAddress);
     if (peer.connected) {
       return {
         bridge: null,

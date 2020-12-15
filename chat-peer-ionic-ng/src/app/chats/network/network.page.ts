@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ViewDidEnter, ViewDidLeave } from "@ionic/angular";
 import { Subject } from "rxjs";
-import { MainPeerHelper } from "chat-peer-sdk";
 import { ChatService } from "src/services/chat.service";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-network",
@@ -10,7 +10,7 @@ import { ChatService } from "src/services/chat.service";
   styleUrls: ["./network.page.scss"],
 })
 export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
-  constructor(private cdrf: ChangeDetectorRef, private chat: ChatService) {}
+  constructor(private cdrf: ChangeDetectorRef, private chat: ChatService, private peer: PeerService) {}
 
   message: string;
 
@@ -22,7 +22,7 @@ export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
 
   ngOnInit() {
     try {
-      MainPeerHelper.instance.getServerPeerList().then((data) => {
+      this.peer.mainPeerHelper.getServerPeerList().then((data) => {
         this.addressList$.next(data);
       });
     } catch (error) {
@@ -30,33 +30,33 @@ export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
     }
 
     this.listeners.push(
-      MainPeerHelper.instance.on("peerConnected", (peer) => {
+      this.peer.mainPeerHelper.on("peerConnected", (peer) => {
         this.cdrf.detectChanges();
       }),
-      MainPeerHelper.instance.on("peerClosed", (peer) => {
+      this.peer.mainPeerHelper.on("peerClosed", (peer) => {
         this.cdrf.detectChanges();
       })
     );
   }
 
   connect(otherAddress: string) {
-    let peer = MainPeerHelper.instance.launch(otherAddress);
+    let peer = this.peer.mainPeerHelper.launch(otherAddress);
     console.info(peer);
   }
 
   resconnect(otherAddress: string) {
-    let peer = MainPeerHelper.instance.reslaunch(otherAddress);
+    let peer = this.peer.mainPeerHelper.reslaunch(otherAddress);
     console.info(peer);
   }
 
   status(address: string) {
-    let boo = MainPeerHelper.instance.has(address);
-    if (!boo) return false;
-    return MainPeerHelper.instance.getPeer(address).connected;
+    let boo = this.peer.mainPeerHelper.has(address);
+    if (!boo) return null;
+    return this.peer.mainPeerHelper.getPeer(address).connected;
   }
 
   hasKey(address: string) {
-    return MainPeerHelper.instance.has(address);
+    return this.peer.mainPeerHelper.has(address);
   }
 
   lunchChat(address: string) {
@@ -64,7 +64,7 @@ export class NetworkPage implements OnInit, ViewDidLeave, ViewDidEnter {
   }
 
   scanAddressList() {
-    MainPeerHelper.instance.scanAddressList();
+    this.peer.mainPeerHelper.scanAddressList();
   }
 
   ionViewDidLeave() {

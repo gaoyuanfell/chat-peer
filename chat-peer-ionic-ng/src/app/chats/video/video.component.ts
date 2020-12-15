@@ -1,8 +1,9 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from "@angular/core";
 import { ModalController, ViewWillLeave } from "@ionic/angular";
 import { packForwardBlocks, unpackForwardBlocks } from "chat-peer-models";
-import { BusPeerHelper, PeerBus } from "chat-peer-sdk";
+import { PeerBus } from "chat-peer-sdk";
 import { BusMessageType } from "src/common/enum";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-video",
@@ -10,7 +11,7 @@ import { BusMessageType } from "src/common/enum";
   styleUrls: ["./video.component.scss"],
 })
 export class VideoComponent implements OnInit, OnDestroy, ViewWillLeave {
-  constructor(private cdrf: ChangeDetectorRef, private modal: ModalController) {}
+  constructor(private cdrf: ChangeDetectorRef, private modal: ModalController, private peerService: PeerService) {}
 
   @Input() stream: MediaStream;
   @Input() businessId: string;
@@ -22,7 +23,7 @@ export class VideoComponent implements OnInit, OnDestroy, ViewWillLeave {
   listeners = [];
 
   ngOnInit() {
-    this.peer = BusPeerHelper.instance.getBusPeer(this.otherAddress, this.businessId);
+    this.peer = this.peerService.busPeerHelper.getBusPeer(this.otherAddress, this.businessId);
     this.peer.addTrack(this.stream);
     this.listeners.push(
       this.peer.on("track", (event) => {

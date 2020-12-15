@@ -12,10 +12,10 @@ import {
 import { PeerBus } from "../peer";
 import { BusPool } from "../pool";
 import { EmitTypeBusHelper, Subscribe } from "../subscribe";
-import { MainPeerHelper } from "./main-peer.helper";
+import { mainPeerHelper } from "./main-peer.helper";
 
 const busPeerHelperSymbol = Symbol("BusPeerHelper");
-export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
+class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   [busPeerHelperSymbol]: BusPeerHelper;
 
   private _pool!: BusPool;
@@ -74,7 +74,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
    * @param data
    */
   send(otherAddress: string, data: ArrayBuffer) {
-    let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
+    let mainPeer = mainPeerHelper.getPeer(otherAddress);
     if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let model = new TransferMessage({
       to: otherAddress,
@@ -125,7 +125,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   }
 
   offer(otherAddress: string, businessId: string) {
-    let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
+    let mainPeer = mainPeerHelper.getPeer(otherAddress);
     if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let peer = this._pool.get(otherAddress, businessId);
     this.peerBindSendEvent(peer, otherAddress);
@@ -134,7 +134,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   }
 
   answer(otherAddress: string, businessId: string) {
-    let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
+    let mainPeer = mainPeerHelper.getPeer(otherAddress);
     if (!mainPeer.connected) throw new Error("mainPeer is not connected");
     let peer = this._pool.get(otherAddress, businessId);
     if (peer.connectionState !== "new") peer.create();
@@ -145,7 +145,7 @@ export class BusPeerHelper extends Subscribe<EmitTypeBusHelper> {
   private peerBindSendEvent(peer: PeerBus, otherAddress: string) {
     if (peer.hasBindEvent) return;
     peer.hasBindEvent = true;
-    let mainPeer = MainPeerHelper.instance.getPeer(otherAddress);
+    let mainPeer = mainPeerHelper.getPeer(otherAddress);
     peer.on("sendOffer", (buffer) => {
       mainPeer.channelSend(buffer);
     });

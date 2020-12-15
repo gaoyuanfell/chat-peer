@@ -24,11 +24,11 @@ import { PeerMain } from "../peer";
 import { Subscribe } from "../subscribe";
 import { EmitTypeMainHelper } from "../subscribe";
 import { uuid } from "../util";
-import { Contact, DHT, Id, RPC } from "../kademlia";
+import { DHT, Id, RPC } from "../kademlia";
 
 const peerHelperSymbol = Symbol("peerHelperSymbol");
 
-export class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
+class MainPeerHelper extends Subscribe<EmitTypeMainHelper> {
   _pool!: Pool;
   _socket!: SocketService;
 

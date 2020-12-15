@@ -1,6 +1,7 @@
 import { Component } from "@angular/core";
 import { AlertController } from "@ionic/angular";
-import { MainPeerHelper, BusPeerHelper, PeerMain, PeerHelper } from "chat-peer-sdk";
+import { PeerMain, PeerHelper } from "chat-peer-sdk";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-tab1",
@@ -13,7 +14,7 @@ export class Tab1Page {
   message: string;
   peerHelper: PeerHelper;
 
-  constructor(public alertController: AlertController) {
+  constructor(public alertController: AlertController, private peerService: PeerService) {
     this.peerHelper = new PeerHelper();
   }
 
@@ -49,11 +50,11 @@ export class Tab1Page {
   async login() {
     this.peerHelper.create(this.address);
     setInterval(() => {
-      this.peerList = MainPeerHelper.instance.getPeerList();
+      this.peerList = this.peerService.mainPeerHelper.getPeerList();
     }, 2000);
 
-    BusPeerHelper.instance.on("offer", ({ businessId, otherAddress, next }) => {
-      let peer = BusPeerHelper.instance.getBusPeer(otherAddress, businessId);
+    this.peerService.busPeerHelper.on("offer", ({ businessId, otherAddress, next }) => {
+      let peer = this.peerService.busPeerHelper.getBusPeer(otherAddress, businessId);
 
       peer.on("track", (e) => {
         this.other = e.streams[0];
@@ -75,22 +76,22 @@ export class Tab1Page {
   }
 
   connet() {
-    this.mainPeer = MainPeerHelper.instance.launch(this.otherAddress);
+    this.mainPeer = this.peerService.mainPeerHelper.launch(this.otherAddress);
   }
 
   scanAddressList() {
-    MainPeerHelper.instance.scanAddressList();
+    this.peerService.mainPeerHelper.scanAddressList();
   }
 
   async call() {
     let businessId = Math.random().toString();
-    let peer = BusPeerHelper.instance.getBusPeer(this.otherAddress, businessId);
+    let peer = this.peerService.busPeerHelper.getBusPeer(this.otherAddress, businessId);
     peer.on("track", (e) => {
       this.other = e.streams[0];
     });
     let stream = await navigator.mediaDevices.getUserMedia({ video: true });
     peer.addTrack(stream);
-    BusPeerHelper.instance.offer(this.otherAddress, businessId);
+    this.peerService.busPeerHelper.offer(this.otherAddress, businessId);
     this.my = stream;
     console.info(peer);
     this.peer = peer;

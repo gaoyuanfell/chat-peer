@@ -21,7 +21,7 @@
       <ion-item *virtualItem="let item">
         <ion-label>节点地址： {{item}}</ion-label>
         <ion-button *ngIf="status(item)" (click)="lunchChat(item)">发起聊天</ion-button>
-        <ion-button *ngIf="!status(item)" (click)="connect(item)">连接</ion-button>
+        <ion-button *ngIf="status(item) === null" (click)="connect(item)">连接</ion-button>
         <ion-button *ngIf="hasKey(item)" (click)="resconnect(item)">重新连接</ion-button>
       </ion-item>
     </ion-virtual-scroll>

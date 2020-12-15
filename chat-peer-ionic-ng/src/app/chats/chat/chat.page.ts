@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { NavController, ViewDidEnter, ViewDidLeave, ViewWillEnter } from "@ionic/angular";
-import { BusPeerHelper, PeerBus } from "chat-peer-sdk";
+import { PeerBus } from "chat-peer-sdk";
 import { packForwardBlocks } from "chat-peer-models";
 import { BusMessageType } from "src/common/enum";
 import { ChatService } from "src/services/chat.service";
+import { PeerService } from "src/services/peer.service";
 
 @Component({
   selector: "app-chat",
@@ -22,7 +23,8 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
     private route: ActivatedRoute,
     private navCtrl: NavController,
     private cdrf: ChangeDetectorRef,
-    private chat: ChatService
+    private chat: ChatService,
+    private peerService: PeerService
   ) {
     let { businessId, otherAddress } = this.route.snapshot.queryParams;
     this.businessId = businessId;
@@ -50,12 +52,12 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
   otherAddress: string;
 
   get peer(): PeerBus {
-    return BusPeerHelper.instance.getBusPeer(this.otherAddress, this.businessId);
+    return this.peerService.busPeerHelper.getBusPeer(this.otherAddress, this.businessId);
   }
 
   initChat() {
     // let { businessId } = this.route.snapshot.queryParams;
-    // this.peer = BusPeerHelper.instance.getBusPeer(otherAddress, businessId);
+    // this.peer = busPeerHelper.getBusPeer(otherAddress, businessId);
     // let chatModel = await this.chat.getChat(this.businessId);
     // if (!chatModel) throw new Error("会话不存在");
     if (!this.peer.connected) {
@@ -85,7 +87,7 @@ export class ChatPage implements OnInit, ViewDidLeave, ViewDidEnter, ViewWillEnt
 
   chatVideo() {
     let arr = packForwardBlocks([{ type: BusMessageType.VIDEO_REQUEST, payload: new Uint8Array().buffer }]);
-    BusPeerHelper.instance.send(this.peer.to, arr.buffer);
+    this.peerService.busPeerHelper.send(this.peer.to, arr.buffer);
   }
 
   // 挂断
