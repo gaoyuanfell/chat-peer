@@ -19,6 +19,10 @@ export class PeerService {
     this.peerHelper.scanAddressList();
   }
 
+  find(targetAddress: string) {
+    return this.peerHelper.find(targetAddress);
+  }
+
   get rpc(): RPC {
     return this.peerHelper.rpc;
   }

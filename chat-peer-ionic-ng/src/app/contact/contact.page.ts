@@ -21,7 +21,7 @@ export class ContactPage implements OnInit {
   }
 
   lookup() {
-    this.peer.dht.find(this.targetAddress).then((res) => {
+    this.peer.find(this.targetAddress).then((res) => {
       console.info(res);
     });
   }

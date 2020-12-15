@@ -23,21 +23,21 @@ export abstract class Peer<T> extends Subscribe<T> {
 
   create() {
     this.rtcPeer = new RTCPeerConnection({
-      // iceServers: [
-      //   // {
-      //   //   urls: [
-      //   //     "stun:stun1.l.google.com:19302",
-      //   //     "stun:stun2.l.google.com:19302",
-      //   //     "stun:stun3.l.google.com:19302",
-      //   //     "stun:stun4.l.google.com:19302",
-      //   //   ],
-      //   // },
-      //   // {
-      //   //   urls: "turn:s331835e69.zicp.vip:8865",
-      //   //   username: "test",
-      //   //   credential: "test123456789",
-      //   // },
-      // ],
+      iceServers: [
+        // {
+        //   urls: [
+        //     "stun:stun1.l.google.com:19302",
+        //     "stun:stun2.l.google.com:19302",
+        //     "stun:stun3.l.google.com:19302",
+        //     "stun:stun4.l.google.com:19302",
+        //   ],
+        // },
+        {
+          urls: "turn:s331835e69.zicp.vip:8865",
+          username: "test",
+          credential: "test123456789",
+        },
+      ],
     });
     this.peerEvent();
   }

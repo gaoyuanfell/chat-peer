@@ -53,9 +53,9 @@ export class RPC {
       this._peerBusinessIdMap.set(peer, businessId);
     } catch (error) {
       let promise = this._promiseMap.get(businessId);
+      this._promiseMap.delete(businessId);
       if (!promise) throw new Error("promise not find");
       promise.reject(error);
-      this._promiseMap.delete(businessId);
     }
     return p;
   }
@@ -120,6 +120,7 @@ export class RPC {
     unpackForwardBlocks(
       pickTypedArrayBuffer(msg.data),
       ({ type, payload: buffer }) => {
+        console.info("DataBlockType:", DataBlockType[type]);
         switch (type) {
           case DataBlockType.KAD_FINDNODE:
             this.onKadFindnode(buffer);

@@ -75,8 +75,9 @@ export class Lookup {
   ) {
     try {
       await this._rpc.peerLaunch(contact.id._key);
-      console.info("*****************连接成功****************");
-    } catch (error) {}
+    } catch (error) {
+      console.info(error);
+    }
 
     this._rpc.findNode(contact.id._key, this._targetId._key).then(
       (address) => {

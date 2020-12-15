@@ -19,18 +19,17 @@ export class DHT {
    */
   async discovered(id: Id) {
     let contact = new Contact(id);
-    this._routes.store(contact);
-    // let oldContact = this._routes.store(contact);
-    // if (oldContact) {
-    //   try {
-    //     let address = await this._rpc.ping(oldContact.id._key);
-    //     this._routes.store(new Contact(Id.fromKey(address)));
-    //     console.info(`${id._key}被忽略了`);
-    //   } catch (error) {
-    //     this.remove(oldContact.id);
-    //     this._routes.store(contact);
-    //   }
-    // }
+    let oldContact = this._routes.store(contact);
+    if (oldContact) {
+      try {
+        let address = await this._rpc.ping(oldContact.id._key);
+        this._routes.store(new Contact(Id.fromKey(address)));
+        console.info(`${id._key}被忽略了`);
+      } catch (error) {
+        this.remove(oldContact.id);
+        this._routes.store(contact);
+      }
+    }
   }
 
   remove(id: Id) {
