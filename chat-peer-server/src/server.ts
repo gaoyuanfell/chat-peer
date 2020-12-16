@@ -11,7 +11,7 @@ import { MsgTypes } from "chat-peer-models";
 import { userManager } from "./helpers/user-manager";
 
 const port = 1129;
-const isHttp = true;
+const isHttp = false;
 
 const caPath = path.resolve("./ca");
 
