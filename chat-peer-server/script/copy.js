@@ -13,4 +13,4 @@ let pack = fs.readFileSync(path.resolve("./package.json")).toString();
 pack = JSON.parse(pack);
 pack.dependencies["chat-peer-models"] = "file://./chat-peer-models";
 
-fs.writeFileSync(path.resolve("../chat/package.json"), JSON.stringify(pack));
+fs.writeFileSync(path.resolve("../chat/package.json"), JSON.stringify(pack, null, 2));
